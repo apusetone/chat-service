@@ -1,0 +1,32 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "autoflush",
+    "boto",
+    "botocore",
+    "chat-service",
+    "consts",
+    "fargate",
+    "fastapi",
+    "filterset",
+    "handup",
+    "itertools",
+    "keepdb",
+    "mypy",
+    "numpy",
+    "openapi",
+    "openid",
+    "pylint",
+    "pytz",
+    "redoc",
+    "referer",
+    "signin",
+    "sessionmaker",
+    "sqlalchemy",
+    "uvicorn",
+    "vform",
+    "viewsets"
+  ],
+  "flagWords": []
+}

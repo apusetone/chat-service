@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    // git
+    "github.vscode-pull-request-github",
+    // docker
+    "ms-azuretools.vscode-docker",
+    "formulahendry.docker-explorer",
+    // etc
+    "emilast.logfilehighlighter",
+    "humao.rest-client",
+    "mikestead.dotenv",
+    "mechatroner.rainbow-csv",
+    "ms-python.vscode-pylance",
+    "streetsidesoftware.code-spell-checker"
+  ],
+  "unwantedRecommendations": []
+}

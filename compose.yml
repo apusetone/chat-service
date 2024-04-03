@@ -1,0 +1,56 @@
+version: "3.2"
+
+services:
+  fastapi:
+    container_name: fastapi
+    build:
+      context: .
+      cache_from:
+        - fastapi:base
+      dockerfile: ./Dockerfile
+      target: ${STAGE:-local}
+    environment:
+      - APP_CONFIG_FILE=${STAGE:-local}
+    command: uvicorn app.main:app --host 0.0.0.0 --reload --reload-dir app
+    env_file:
+      - .env
+    ports:
+      - "${FASTAPI_PORT:-8000}:8000"
+    volumes:
+      - .:/fastapi
+    networks:
+      - backend
+    depends_on:
+      - redis
+      - postgresql
+
+  redis:
+    container_name: redis
+    image: redis:7.0-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+
+  postgresql:
+    container_name: postgresql
+    image: postgres:16.2-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+      - ./.docker/postgresql:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+
+volumes:
+  redis_data:
+  postgresql_data:
+
+networks:
+  backend:
