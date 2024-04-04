@@ -8,7 +8,7 @@ It includes asynchronous DB access using asyncpg and some test code covering the
 ## Installation and quick start up
 
 ```shell
-# set your secret to .env
+# set your secret to .envrc
 $ direnv allow 
 $ make bl
 $ make up
