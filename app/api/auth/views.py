@@ -17,7 +17,7 @@ from .schema import (
 )
 from .use_cases import Login, Logout, Refresh, TwoFa, Unregister
 
-router = APIRouter(prefix="")
+router = APIRouter(prefix="/auth")
 
 
 @router.post(

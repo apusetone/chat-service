@@ -8,13 +8,13 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    bindparam,
     select,
     update,
-    bindparam,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, relationship
-from sqlalchemy.dialects.postgresql import ARRAY
 
 from .base import TimestampedEntity
 

@@ -1,0 +1,51 @@
+# Auth
+
+###
+# @name login
+POST {{endpoint}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com"
+}
+
+###
+@token={{login.response.body.$.token}}
+
+###
+# @name 2fa
+POST {{endpoint}}/api/auth/2fa
+Content-Type: application/json
+
+{
+  "code": "123456",
+  "token": "{{token}}"
+}
+
+###
+@access_token={{2fa.response.body.$.access_token}}
+@refresh_token={{2fa.response.body.$.refresh_token}}
+
+###
+# @name refresh
+POST {{endpoint}}/api/auth/refresh
+Authorization: Bearer {{refresh_token}}
+
+###
+@updated_access_token={{refresh.response.body.$.access_token}}
+
+###
+# @name logout
+POST {{endpoint}}/api/auth/logout
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refresh_token}}"
+}
+
+###
+# @name unregister
+DELETE {{endpoint}}/api/auth/unregister
+Authorization: Bearer {{access_token}}
+

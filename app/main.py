@@ -1,4 +1,6 @@
 import redis.asyncio as redis
+from fastapi import Depends, FastAPI, WebSocket
+from fastapi.responses import JSONResponse
 from fastapi_limiter import FastAPILimiter
 
 from app.api.main import router as api_router
@@ -8,8 +10,6 @@ from app.commons.types import CacheType
 from app.models.schema import AccessTokenSchema
 from app.settings import settings
 from app.ws.messages.views import WebsocketEndpointView
-from fastapi import Depends, FastAPI, WebSocket
-from fastapi.responses import JSONResponse
 
 app = FastAPI(title="chat-service")
 
@@ -41,7 +41,7 @@ async def websocket_endpoint(
 
 @app.get("/", include_in_schema=False)
 async def health() -> JSONResponse:
-    return JSONResponse({"message": "It worked!!"})
+    return JSONResponse({"message": "It works!!"})
 
 
 if __name__ == "__main__":

@@ -1,13 +1,14 @@
-from typing import AsyncIterator
-import boto3
 import json
+from typing import AsyncIterator
+
+import boto3
 from fastapi import HTTPException, status
 from sqlalchemy import select
 
 from app.commons.logging import logger
+from app.commons.types import NotificationType, PlatformType
 from app.db import AsyncSession
-from app.models import Chat, ChatParticipants, Message,Session,User
-from app.commons.types import NotificationType,PlatformType
+from app.models import Chat, ChatParticipants, Message, Session, User
 from app.settings import settings
 
 from .schema import (
@@ -57,7 +58,7 @@ class ReadAllMessage:
                 .limit(params.limit)
             )
             result = await session.execute(stmt)
-            messages = result.scalars().all() 
+            messages = result.scalars().all()
             message_ids = []
             for message in messages:
                 if message.sender_id != user_id and user_id not in message.read_by_list:
@@ -67,7 +68,7 @@ class ReadAllMessage:
             # 既読にしたメッセージを返す
             for message in messages:
                 yield ReadMessageResponse.model_validate(message)
-                
+
             if message_ids:
                 await Message.update_read_by_list(session, message_ids, user_id)
 
@@ -130,7 +131,9 @@ class CreateMessage:
             # # Chat参加者に通知
             async for (
                 participant
-            ) in ChatParticipants.read_all_active_notification_users(a_session, chat_id):
+            ) in ChatParticipants.read_all_active_notification_users(
+                a_session, chat_id
+            ):
                 user = participant.user
                 message_payload = f"{posted_user.username}: {request.content}"
                 if user.notification_type == NotificationType.EMAIL:
@@ -162,18 +165,17 @@ class CreateMessage:
                     pass
                     # read_all_mobileを呼び出し、device_tokenがnullでなく、UNKNOWNでないユーザーに絞る
                     async for session in Session.read_all_mobile(a_session, [user.id]):
-                        if session.user_id == user.id and session.platform_type != PlatformType.UNKNOWN:
+                        if (
+                            session.user_id == user.id
+                            and session.platform_type != PlatformType.UNKNOWN
+                        ):
                             if session.platform_type == PlatformType.ANDROID:
-                                message_body = {
-                                    "GCM": json.dumps(message_payload)
-                                }
+                                message_body = {"GCM": json.dumps(message_payload)}
                             elif session.platform_type == PlatformType.IOS:
                                 message_body = {
-                                    "APNS": json.dumps({
-                                        "aps": {
-                                            "alert": message_payload
-                                        }
-                                    })
+                                    "APNS": json.dumps(
+                                        {"aps": {"alert": message_payload}}
+                                    )
                                 }
 
                             if self.push_client:

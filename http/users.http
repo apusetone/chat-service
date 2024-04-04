@@ -1,0 +1,58 @@
+# Users
+
+###
+# @name login
+POST {{endpoint}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com"
+}
+
+###
+@token={{login.response.body.$.token}}
+
+###
+# @name 2fa
+POST {{endpoint}}/api/auth/2fa
+Content-Type: application/json
+
+{
+  "code": "123456",
+  "token": "{{token}}"
+}
+
+###
+@access_token={{2fa.response.body.$.access_token}}
+@refresh_token={{2fa.response.body.$.refresh_token}}
+
+###
+# @name get_user
+GET {{endpoint}}/api/users
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+###
+# @name update_user
+PUT {{endpoint}}/api/users
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "is_name_visible": false,
+  "username": "testuser12345",
+  "first_name": "John",
+  "last_name": "Smith",
+  "new_email": null,
+  "notification_type": "mobile_push"
+}
+
+###
+# @name verify_email
+PATCH {{endpoint}}/api/users/verify_email
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "code": "123456"
+}

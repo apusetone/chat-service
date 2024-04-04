@@ -11,4 +11,3 @@ from .schema import (
 )
 from .sessions import Session
 from .users import User
-from .chat_participants import ChatParticipants

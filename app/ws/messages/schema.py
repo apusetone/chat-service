@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field, validator
 from datetime import datetime
+
+from pydantic import BaseModel, Field, validator
+
 from app.models import MessageSchema
 
 

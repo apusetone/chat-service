@@ -1,11 +1,11 @@
 import logging
 from typing import Annotated, AsyncIterator
 
+from fastapi import Depends
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.settings import settings
-from fastapi import Depends
 
 logger = logging.getLogger(__name__)
 

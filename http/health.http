@@ -2,4 +2,4 @@
 
 ###
 # @name health
-GET {{chat-endpoint}}
+GET {{endpoint}}

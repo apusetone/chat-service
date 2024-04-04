@@ -1,0 +1,39 @@
+# Sessions
+
+###
+# @name login
+POST {{endpoint}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com"
+}
+
+###
+@token={{login.response.body.$.token}}
+
+###
+# @name 2fa
+POST {{endpoint}}/api/auth/2fa
+Content-Type: application/json
+
+{
+  "code": "123456",
+  "token": "{{token}}"
+}
+
+###
+@access_token={{2fa.response.body.$.access_token}}
+@refresh_token={{2fa.response.body.$.refresh_token}}
+
+###
+# @name refresh
+PUT {{endpoint}}/api/sessions
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refresh_token}}",
+  "device_token": "5dcaed99-e1e0-44dc-bde2-b96188b99e9e",
+  "platform_type": "android"
+}

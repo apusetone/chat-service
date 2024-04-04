@@ -1,0 +1,61 @@
+# Chats
+
+###
+# @name login
+POST {{endpoint}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com"
+}
+
+###
+@token={{login.response.body.$.token}}
+
+###
+# @name 2fa
+POST {{endpoint}}/api/auth/2fa
+Content-Type: application/json
+
+{
+  "code": "481650",
+  "token": "{{token}}"
+}
+
+###
+@access_token={{2fa.response.body.$.access_token}}
+@refresh_token={{2fa.response.body.$.refresh_token}}
+
+###
+# @name get_all_chats
+GET {{endpoint}}/api/chats?offset=0&limit=10&desc=true
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+###
+# @name create_chat
+POST {{endpoint}}/api/chats
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "name": "New room",
+  "participant_names": [
+    "user1", "user2", "user3"
+  ]
+}
+
+###
+@chat_id={{create_chat.response.body.$.id}}
+
+###
+# @name get_chat_participants
+GET {{endpoint}}/api/chats/{{chat_id}}/participants
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+###
+# @name delete_chat
+DELETE {{endpoint}}/api/chats/{{chat_id}}
+Authorization: Bearer {{access_token}}
+

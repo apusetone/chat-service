@@ -182,6 +182,6 @@ class Unregister:
             await User.delete(session, user_id)
 
             # Remove all the old access_tokens
-            await self.redis_cache.delete_with_prefix(user_id)
+            await self.redis_cache.delete_with_prefix(str(user_id))
 
             return None

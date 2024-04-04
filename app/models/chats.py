@@ -20,8 +20,10 @@ class Chat(TimestampedEntity):
     chat_type: Mapped[ChatType] = Column(Integer, nullable=False)
     name: Mapped[str] = Column(String(length=255), nullable=False)
 
-    messages = relationship("Message", back_populates="chat")
-    participants = relationship("ChatParticipants", back_populates="chat")
+    messages = relationship("Message", back_populates="chat", cascade="all, delete")
+    participants = relationship(
+        "ChatParticipants", back_populates="chat", cascade="all, delete"
+    )
     creator = relationship("User", back_populates="created_chats")
 
     __table_args__ = (

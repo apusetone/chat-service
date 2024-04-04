@@ -4,7 +4,7 @@ from typing import AsyncIterator
 
 from sqlalchemy import Column, ForeignKey, join, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, relationship, joinedload
+from sqlalchemy.orm import Mapped, joinedload, relationship
 
 from .base import TimestampedEntity
 from .users import User
@@ -14,7 +14,7 @@ class ChatParticipants(TimestampedEntity):
     __tablename__ = "chat_participants"
 
     chat_id: Mapped[int] = Column(
-        ForeignKey("chats.id"), primary_key=True, nullable=False
+        ForeignKey("chats.id", ondelete="CASCADE"), primary_key=True, nullable=False
     )
     user_id: Mapped[int] = Column(
         ForeignKey("users.id"), primary_key=True, nullable=False
@@ -53,4 +53,3 @@ class ChatParticipants(TimestampedEntity):
 
         async for row in stream:
             yield row
-

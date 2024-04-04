@@ -1,15 +1,16 @@
+import json
+import logging
+from typing import AsyncIterator
+
+import boto3
+from boto3.session import Session as AwsSession
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-import json
-from typing import AsyncIterator
-from app.models import Chat, ChatParticipants, User, Session
-from boto3.session import Session as AwsSession
+
 from app.commons.logging import logger
 from app.commons.types import NotificationType, PlatformType
+from app.models import Chat, ChatParticipants, Session, User
 from app.settings import settings
-import boto3
-import logging
-
 
 logger = logging.getLogger(__name__)
 

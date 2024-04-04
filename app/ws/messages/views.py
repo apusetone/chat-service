@@ -1,6 +1,7 @@
+from fastapi import WebSocket, status
+
 from app.db import AsyncSessionLocal, ws_clients
 from app.models.schema import AccessTokenSchema
-from fastapi import WebSocket, status
 
 from .repositories import (
     AwsClientRepository,
