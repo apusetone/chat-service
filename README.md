@@ -8,7 +8,8 @@ It includes asynchronous DB access using asyncpg and some test code covering the
 ## Installation and quick start up
 
 ```shell
-$ direnv allow # set your secret to .env
+# set your secret to .env
+$ direnv allow 
 $ make bl
 $ make up
 $ make migrate
