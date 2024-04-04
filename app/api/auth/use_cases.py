@@ -50,7 +50,7 @@ class Login:
         else:
             logger.info(body)
 
-        return LoginResponse(token=generate_random_token)
+        return LoginResponse(token=generated_random_token)
 
 
 class TwoFa:

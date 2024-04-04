@@ -23,7 +23,6 @@ class Message(TimestampedEntity):
     sender = relationship("User", back_populates="sent_messages")
 
     __table_args__ = (
-        Index("ix_messages_id", "id"),
         Index("ix_messages_sender_id", "sender_id"),
         Index("ix_messages_content", "content"),
         Index("ix_messages_created_at", "created_at"),

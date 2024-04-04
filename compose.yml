@@ -11,7 +11,7 @@ services:
       target: ${STAGE:-local}
     environment:
       - APP_CONFIG_FILE=${STAGE:-local}
-    command: uvicorn app.main:app --host 0.0.0.0 --reload --reload-dir app
+    command: uvicorn app.main:app --host 0.0.0.0 --no-server-header --reload --reload-dir app
     env_file:
       - .env
     ports:

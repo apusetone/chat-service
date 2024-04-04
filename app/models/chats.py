@@ -27,7 +27,6 @@ class Chat(TimestampedEntity):
     creator = relationship("User", back_populates="created_chats")
 
     __table_args__ = (
-        Index("ix_chats_id", "id"),
         Index("ix_chats_created_at", "created_at"),
         Index("ix_chats_created_by", "created_by"),
         Index("ix_chats_name", "name"),

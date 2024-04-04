@@ -59,7 +59,6 @@ class User(TimestampedEntity):
     chats = relationship("ChatParticipants", back_populates="user")
 
     __table_args__ = (
-        Index("ix_users_id", "id"),
         Index("ix_users_username", "username"),
         Index("ix_users_first_name", "first_name"),
         Index("ix_users_last_name", "last_name"),
@@ -88,7 +87,8 @@ class User(TimestampedEntity):
 
     @classmethod
     async def read_by_email(cls, session: AsyncSession, email: str) -> User | None:
-        stmt = select(cls).where(cls.email == email, cls.deleted_at is None)
+        # flake8: noqa: E711
+        stmt = select(cls).where(cls.email == email, cls.deleted_at == None)
         return await session.scalar(stmt.order_by(cls.id))
 
     @classmethod

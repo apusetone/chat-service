@@ -124,7 +124,7 @@ class ChatSchema(BaseModel):
     updated_at: datetime | None = Field(
         None, description="The time when the chat was last updated."
     )
-    chat_type: str | None = Field("IOS", description="The type of chat.")
+    chat_type: str | None = Field("DIRECT", description="The type of chat.")
     name: str = Field(..., max_length=255, description="The name of the chat.")
 
     model_config = ConfigDict(from_attributes=True)

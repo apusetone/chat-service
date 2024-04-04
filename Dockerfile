@@ -26,7 +26,7 @@ RUN apt-get update \
 
 EXPOSE 8000
 ENV APP_CONFIG_FILE=local
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--reload", "--reload-dir", "app"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--no-server-header", "--reload", "--reload-dir", "app"]
 
 # local
 FROM base AS local

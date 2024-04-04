@@ -1,18 +1,19 @@
-"""create tables
+"""update tables
 
-Revision ID: d8022731883e
+Revision ID: f9e96bcb210a
 Revises: 
-Create Date: 2024-04-03 14:43:15.678210
+Create Date: 2024-04-04 05:27:12.962232
 
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
+
 import app.commons.type_decorators
 
 # revision identifiers, used by Alembic.
-revision = "d8022731883e"
+revision = "f9e96bcb210a"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -42,7 +43,6 @@ def upgrade():
         sa.UniqueConstraint("username", name=op.f("uq_users_username")),
     )
     op.create_index("ix_users_first_name", "users", ["first_name"], unique=False)
-    op.create_index("ix_users_id", "users", ["id"], unique=False)
     op.create_index("ix_users_last_name", "users", ["last_name"], unique=False)
     op.create_index("ix_users_username", "users", ["username"], unique=False)
     op.create_table(
@@ -53,25 +53,34 @@ def upgrade():
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["created_by"], ["users.id"], name=op.f("fk_chats_created_by_users")),
+        sa.ForeignKeyConstraint(
+            ["created_by"], ["users.id"], name=op.f("fk_chats_created_by_users")
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_chats")),
     )
     op.create_index("ix_chats_created_at", "chats", ["created_at"], unique=False)
     op.create_index("ix_chats_created_by", "chats", ["created_by"], unique=False)
-    op.create_index("ix_chats_id", "chats", ["id"], unique=False)
     op.create_index("ix_chats_name", "chats", ["name"], unique=False)
     op.create_index("ix_chats_updated_at", "chats", ["updated_at"], unique=False)
     op.create_table(
         "sessions",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("device_token", app.commons.type_decorators.PGPString(), nullable=True),
+        sa.Column(
+            "device_token", app.commons.type_decorators.PGPString(), nullable=True
+        ),
         sa.Column("platform_type", sa.Integer(), nullable=True),
-        sa.Column("refresh_token", app.commons.type_decorators.PGPString(), nullable=False),
-        sa.Column("refresh_token_expired_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column(
+            "refresh_token", app.commons.type_decorators.PGPString(), nullable=False
+        ),
+        sa.Column(
+            "refresh_token_expired_at", sa.DateTime(timezone=True), nullable=False
+        ),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["user_id"], ["users.id"], name=op.f("fk_sessions_user_id_users")),
+        sa.ForeignKeyConstraint(
+            ["user_id"], ["users.id"], name=op.f("fk_sessions_user_id_users")
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_sessions")),
     )
     op.create_index(op.f("ix_sessions_id"), "sessions", ["id"], unique=False)
@@ -81,9 +90,18 @@ def upgrade():
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["chat_id"], ["chats.id"], name=op.f("fk_chat_participants_chat_id_chats")),
-        sa.ForeignKeyConstraint(["user_id"], ["users.id"], name=op.f("fk_chat_participants_user_id_users")),
-        sa.PrimaryKeyConstraint("chat_id", "user_id", name=op.f("pk_chat_participants")),
+        sa.ForeignKeyConstraint(
+            ["chat_id"],
+            ["chats.id"],
+            name=op.f("fk_chat_participants_chat_id_chats"),
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"], ["users.id"], name=op.f("fk_chat_participants_user_id_users")
+        ),
+        sa.PrimaryKeyConstraint(
+            "chat_id", "user_id", name=op.f("pk_chat_participants")
+        ),
     )
     op.create_table(
         "messages",
@@ -91,16 +109,24 @@ def upgrade():
         sa.Column("chat_id", sa.Integer(), nullable=False),
         sa.Column("sender_id", sa.Integer(), nullable=False),
         sa.Column("content", sa.String(length=1024), nullable=False),
-        sa.Column("read_by_list", postgresql.ARRAY(sa.Integer()), server_default="{}", nullable=True),
+        sa.Column(
+            "read_by_list",
+            postgresql.ARRAY(sa.Integer()),
+            server_default="{}",
+            nullable=True,
+        ),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["chat_id"], ["chats.id"], name=op.f("fk_messages_chat_id_chats")),
-        sa.ForeignKeyConstraint(["sender_id"], ["users.id"], name=op.f("fk_messages_sender_id_users")),
+        sa.ForeignKeyConstraint(
+            ["chat_id"], ["chats.id"], name=op.f("fk_messages_chat_id_chats")
+        ),
+        sa.ForeignKeyConstraint(
+            ["sender_id"], ["users.id"], name=op.f("fk_messages_sender_id_users")
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_messages")),
     )
     op.create_index("ix_messages_content", "messages", ["content"], unique=False)
     op.create_index("ix_messages_created_at", "messages", ["created_at"], unique=False)
-    op.create_index("ix_messages_id", "messages", ["id"], unique=False)
     op.create_index("ix_messages_sender_id", "messages", ["sender_id"], unique=False)
     # ### end Alembic commands ###
 
@@ -114,7 +140,6 @@ def downgrade():
 
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_index("ix_messages_sender_id", table_name="messages")
-    op.drop_index("ix_messages_id", table_name="messages")
     op.drop_index("ix_messages_created_at", table_name="messages")
     op.drop_index("ix_messages_content", table_name="messages")
     op.drop_table("messages")
@@ -123,13 +148,11 @@ def downgrade():
     op.drop_table("sessions")
     op.drop_index("ix_chats_updated_at", table_name="chats")
     op.drop_index("ix_chats_name", table_name="chats")
-    op.drop_index("ix_chats_id", table_name="chats")
     op.drop_index("ix_chats_created_by", table_name="chats")
     op.drop_index("ix_chats_created_at", table_name="chats")
     op.drop_table("chats")
     op.drop_index("ix_users_username", table_name="users")
     op.drop_index("ix_users_last_name", table_name="users")
-    op.drop_index("ix_users_id", table_name="users")
     op.drop_index("ix_users_first_name", table_name="users")
     op.drop_table("users")
     # ### end Alembic commands ###
