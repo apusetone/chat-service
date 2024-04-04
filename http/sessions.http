@@ -27,7 +27,7 @@ Content-Type: application/json
 @refresh_token={{2fa.response.body.$.refresh_token}}
 
 ###
-# @name refresh
+# @name update_session
 PUT {{endpoint}}/api/sessions
 Authorization: Bearer {{access_token}}
 Content-Type: application/json
