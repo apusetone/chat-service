@@ -43,7 +43,7 @@ Connected (press CTRL+C to quit)
 
  - [インフラ構成](./docs/7-infra.md)
 
- - [リアルタイムチャット機能](./docs/6-realtime-chatting.md)
+ - [ER図](./docs/8-erd.md)
 
 # Future issues
 
