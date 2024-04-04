@@ -7,12 +7,12 @@
 二要素認証によるログインが成功した後、モバイルユーザーはアクセストークン、リフレッシュトークン、デバイストークン、およびプラットフォームタイプ（例：android）を`/api/sessions`エンドポイントにPUTリクエストとして送信し、セッション情報を更新します。
 
 ```http
-PUT {{endpoint}}/api/sessions
-Authorization: Bearer {{access_token}}
+PUT /api/sessions
+Authorization: Bearer アクセストークン
 Content-Type: application/json
 
 {
-  "refresh_token": "{{refresh_token}}",
+  "refresh_token": "リフレッシュトークン",
   "device_token": "5dcaed99-e1e0-44dc-bde2-b96188b99e9e",
   "platform_type": "android"
 }
