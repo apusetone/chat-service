@@ -67,8 +67,6 @@ Connected (press CTRL+C to quit)
 
   - req/res内容をマスクした上での表示
 
-  - 
-
 - [ ] Redisについての不足
 
   - トークン周辺の暗号化が乏しい
