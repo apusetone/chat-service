@@ -1,6 +1,5 @@
 from fastapi import HTTPException, status
 
-from app.commons.types import PlatformType
 from app.db import AsyncSession
 from app.models import Session, SessionSchema
 

@@ -88,7 +88,7 @@ class User(TimestampedEntity):
 
     @classmethod
     async def read_by_email(cls, session: AsyncSession, email: str) -> User | None:
-        stmt = select(cls).where(cls.email == email, cls.deleted_at == None)
+        stmt = select(cls).where(cls.email == email, cls.deleted_at is None)
         return await session.scalar(stmt.order_by(cls.id))
 
     @classmethod

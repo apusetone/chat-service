@@ -5,7 +5,7 @@ from app.api.auth.schema import TwoFaRequest
 from app.commons.logging import logger
 from app.commons.redis_cache import RedisCache
 from app.commons.types import CacheType
-from app.commons.utils import TWO_FA_CODE
+from app.commons.utils import generate_two_fa_code
 from app.db import AsyncSession
 from app.models import User, UserSchema
 from app.models.schema import AccessTokenSchema
@@ -49,14 +49,14 @@ class UpdateUser:
             await session.refresh(user)
 
             if new_email:
-                two_fa_code = TWO_FA_CODE(6)
+                generated_two_fa_code = generate_two_fa_code(6)
 
                 await self.redis_cache.set(
                     key=schema.access_token,
-                    value={"code": two_fa_code},
+                    value={"code": generated_two_fa_code},
                     expiry=120,
                 )
-                body = {"Text": {"Data": two_fa_code, "Charset": "UTF-8"}}
+                body = {"Text": {"Data": generated_two_fa_code, "Charset": "UTF-8"}}
 
                 if self.client:
                     response = self.client.send_email(

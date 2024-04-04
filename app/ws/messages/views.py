@@ -97,5 +97,5 @@ class WebsocketEndpointView:
                 for key, client in ws_clients.items():
                     if int(key.split(":")[0]) == chat_id:
                         await client.send_json(response.model_dump())
-        except:
+        except Exception:
             del ws_clients[client_id]

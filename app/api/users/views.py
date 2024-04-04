@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, Request, status
+from fastapi import APIRouter, Body, Depends, status
 from fastapi_limiter.depends import RateLimiter
 
 from app.commons.authentication import AccessTokenAuthentication
@@ -49,7 +49,7 @@ async def update(
     ],
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def update(
+async def partial_update(
     request: PartialUpdateUserRequest = Body(...),
     schema: AccessTokenSchema = Depends(AccessTokenAuthentication.get_current_user),
     use_case: PartialUpdateUser = Depends(),

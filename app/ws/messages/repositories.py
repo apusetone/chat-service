@@ -1,5 +1,4 @@
 import json
-import logging
 from typing import AsyncIterator
 
 import boto3
@@ -11,8 +10,6 @@ from app.commons.logging import logger
 from app.commons.types import NotificationType, PlatformType
 from app.models import Chat, ChatParticipants, Session, User
 from app.settings import settings
-
-logger = logging.getLogger(__name__)
 
 
 class ChatRepository:

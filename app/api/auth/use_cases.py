@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from app.commons.logging import logger
 from app.commons.redis_cache import RedisCache
 from app.commons.types import CacheType, TokenType
-from app.commons.utils import RANDOM_TOKEN, TWO_FA_CODE
+from app.commons.utils import generate_random_token, generate_two_fa_code
 from app.db import AsyncSession
 from app.models import Session, User
 from app.settings import settings
@@ -25,13 +25,15 @@ class Login:
         )
 
     async def execute(self, email: str) -> LoginResponse:
-        random_token = RANDOM_TOKEN(32)
-        two_fa_code = TWO_FA_CODE(6)
+        generated_random_token = generate_random_token(32)
+        generated_two_fa_code = generate_two_fa_code(6)
 
         await self.redis_cache.set(
-            key=random_token, value={"code": two_fa_code, "email": email}, expiry=120
+            key=generated_random_token,
+            value={"code": generated_two_fa_code, "email": email},
+            expiry=120,
         )
-        body = {"Text": {"Data": two_fa_code, "Charset": "UTF-8"}}
+        body = {"Text": {"Data": generated_two_fa_code, "Charset": "UTF-8"}}
 
         if self.client:
             response = self.client.send_email(
@@ -48,7 +50,7 @@ class Login:
         else:
             logger.info(body)
 
-        return LoginResponse(token=random_token)
+        return LoginResponse(token=generate_random_token)
 
 
 class TwoFa:
@@ -94,7 +96,7 @@ class TwoFa:
             user_id = user.id
 
             # Create a new session for the user
-            refresh_token = RANDOM_TOKEN(32)
+            refresh_token = generate_random_token(32)
             await Session.create(
                 session,
                 user_id=user_id,
@@ -104,7 +106,7 @@ class TwoFa:
             )
 
         # Set a new accsess_token for the user
-        access_token = RANDOM_TOKEN(32)
+        access_token = generate_random_token(32)
         await self.set_redis_cache.set(
             f"{user_id}:{access_token}",
             {"user_id": user_id},
@@ -140,7 +142,7 @@ class Refresh:
             # Remove old access_tokens
             await self.redis_cache.delete_with_prefix(user_id)
 
-            new_access_token = RANDOM_TOKEN(32)
+            new_access_token = generate_random_token(32)
             await self.redis_cache.set(
                 f"{user_id}:{new_access_token}",
                 {"user_id": user_id},

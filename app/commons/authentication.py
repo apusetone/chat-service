@@ -76,7 +76,7 @@ async def websoket_headers(
 ) -> RefreshTokenSchema:
     try:
         token = authorization[len("Bearer ") :]
-    except:
+    except IndexError:
         raise WebSocketException(
             code=status.WS_1008_POLICY_VIOLATION,
             reason="Invalid authentication credentials",

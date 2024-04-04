@@ -51,19 +51,6 @@ class Chat(TimestampedEntity):
             yield row
 
     @classmethod
-    async def read_all(
-        cls, session: AsyncSession, user_id: int, offset: int, limit: int, desc: bool
-    ) -> AsyncIterator[Chat]:
-        stmt = (
-            select(cls).where(cls.created_by == user_id).offset(offset).limit(limit)
-        )  # .options(joinedload(cls.created_by, innerjoin=True))
-        stream = await session.stream_scalars(
-            stmt.order_by(cls.id.desc() if desc else cls.id)
-        )
-        async for row in stream:
-            yield row
-
-    @classmethod
     async def read_by_id(cls, session: AsyncSession, chat_id: int) -> Chat | None:
         stmt = select(cls).where(cls.id == chat_id)
         return await session.scalar(stmt.order_by(cls.id))

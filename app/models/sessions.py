@@ -3,16 +3,7 @@ from __future__ import annotations
 import os
 from typing import AsyncIterator
 
-from sqlalchemy import (
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    String,
-    delete,
-    func,
-    select,
-)
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, relationship
 

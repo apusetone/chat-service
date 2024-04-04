@@ -26,7 +26,7 @@ router = APIRouter(prefix="/auth")
     dependencies=[Depends(RateLimiter(times=3, seconds=10))],
     status_code=status.HTTP_201_CREATED,
 )
-async def create(
+async def login(
     data: LoginRequest,
     use_case: Login = Depends(Login),
 ) -> LoginResponse:
@@ -39,7 +39,7 @@ async def create(
     dependencies=[Depends(RateLimiter(times=3, seconds=10))],
     status_code=status.HTTP_201_CREATED,
 )
-async def create(
+async def two_fa(
     data: TwoFaRequest,
     use_case: TwoFa = Depends(TwoFa),
 ) -> TwoFaResponse:
@@ -55,7 +55,7 @@ async def create(
     ],
     status_code=status.HTTP_201_CREATED,
 )
-async def create(
+async def refresh(
     data: RefreshTokenSchema = Depends(RefreshTokenAuthentication.get_current_user),
     use_case: Refresh = Depends(Refresh),
 ) -> RefreshResponse:
@@ -69,7 +69,7 @@ async def create(
     ],
     status_code=status.HTTP_201_CREATED,
 )
-async def create(
+async def logout(
     request: LogoutRequest = Body(...),
     schema: AccessTokenSchema = Depends(AccessTokenAuthentication.get_current_user),
     use_case: Logout = Depends(),
@@ -84,7 +84,7 @@ async def create(
     ],
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def create(
+async def unregister(
     data: AccessTokenSchema = Depends(AccessTokenAuthentication.get_current_user),
     use_case: Unregister = Depends(Unregister),
 ) -> None:

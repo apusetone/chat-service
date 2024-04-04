@@ -2,16 +2,7 @@ from __future__ import annotations
 
 from typing import AsyncIterator
 
-from sqlalchemy import (
-    Column,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-    bindparam,
-    select,
-    update,
-)
+from sqlalchemy import Column, ForeignKey, Index, Integer, String, select, update
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, relationship
