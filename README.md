@@ -9,7 +9,7 @@ It includes asynchronous DB access using asyncpg and some test code covering the
 
 ```shell
 $ direnv allow # set your secret to .env
-$ make build
+$ make bl
 $ make up
 $ make migrate
 $ make test
