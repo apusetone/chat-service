@@ -18,3 +18,13 @@ clean:
 	docker rm -f $$(docker ps -aq)
 	docker volume rm -f $$(docker volume ls -qf dangling=true)
 	docker rmi -f $$(docker images -aq)
+
+schemaspy:
+	docker run --rm -v "$$PWD/schemaspy:/output" \
+	--network="container:postgresql" \
+	schemaspy/schemaspy \
+	-t pgsql11  \
+	-host postgresql -port 5432 -db chat_service \
+	-s public -u postgres -p postgres \
+	-connprops useSSL\\=false \
+	-all -noads
