@@ -34,17 +34,18 @@ async def get_session() -> AsyncIterator[async_sessionmaker]:
 
 AsyncSession = Annotated[async_sessionmaker, Depends(get_session)]
 
+PubSubSessionLocal = from_url(
+    f"{settings.REDIS_URI}/{CacheType.PUBSUB}",
+    encoding="utf-8",
+    decode_responses=True,
+)
+
 
 async def get_pubsub() -> AsyncGenerator[Redis, None]:
-    redis_instance = from_url(
-        f"{settings.REDIS_URI}/{CacheType.PUBSUB}",
-        encoding="utf-8",
-        decode_responses=True,
-    )
     try:
-        yield redis_instance
+        yield PubSubSessionLocal
     finally:
-        await redis_instance.close()
+        await PubSubSessionLocal.close()
 
 
 PubSubSession = Annotated[AsyncGenerator[Redis, None], Depends(get_pubsub)]
