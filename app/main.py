@@ -9,7 +9,7 @@ from app.commons.logging import LoggingContextRoute
 from app.commons.types import CacheType
 from app.models.schema import AccessTokenSchema
 from app.settings import settings
-from app.ws.messages.views import WebsocketEndpointView
+from app.ws.messages.views import WebsocketEndpointView, WebsocketEndpointView2
 
 app = FastAPI(title="chat-service")
 
@@ -36,6 +36,7 @@ async def websocket_endpoint(
 ):
     await websocket.accept()
     wev = WebsocketEndpointView()
+    # wev = WebsocketEndpointView2()
     await wev.execute(websocket, chat_id, schema)
 
 

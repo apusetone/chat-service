@@ -5,6 +5,7 @@ class CacheType(IntEnum):
     THROTTLING = 0
     TWO_FA = 1
     ACCESS_TOKEN = 2
+    PUBSUB = 3
 
 
 class TokenType(Enum):
