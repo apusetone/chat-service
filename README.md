@@ -62,7 +62,7 @@ Connected (press CTRL+C to quit)
 
     - スロットリングを利用しているviewテストをskipしている
 
-    - awsクライアントによる通知送信しているが、未テスト
+    - awsクライアントによる通知送信部分のテスト
 
 - [ ] ロギングについての不足
 
@@ -78,7 +78,7 @@ Connected (press CTRL+C to quit)
 
   - SNS/Email送信履歴の保存、BigQueryなど別サービスでDBに格納
 
-  - awsクライアントによる通知送信しているが、未テスト
+  - awsクライアントによる通知送信している箇所の挙動確認
 
 - [ ] APIのレスポンス形式について
 
