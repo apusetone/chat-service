@@ -20,7 +20,7 @@ clean:
 	docker rmi -f $$(docker images -aq)
 
 schemaspy:
-	docker run --rm -v "$$PWD/schemaspy:/output" \
+	docker run --rm -v "$$PWD/docs:/output" \
 	--network="container:postgresql" \
 	schemaspy/schemaspy \
 	-t pgsql11  \
