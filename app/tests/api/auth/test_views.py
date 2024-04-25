@@ -1,17 +1,12 @@
-import random
-import string
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock
 
 import pytest
 from httpx import AsyncClient
 from pytest_mock import MockFixture
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.commons.redis_cache import RedisCache
 from app.commons.types import NotificationType, PlatformType
 from app.models import Session, User
-from app.settings import settings
 
 
 async def setup_data(a_session: AsyncSession) -> None:

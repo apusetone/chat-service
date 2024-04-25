@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, AsyncGenerator, AsyncIterator, Callable
+from typing import Annotated, AsyncGenerator, AsyncIterator
 
 from fastapi import Depends
 from redis.asyncio import Redis, from_url

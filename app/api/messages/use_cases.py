@@ -128,7 +128,7 @@ class CreateMessage:
 
             posted_user = await User.read_by_id(a_session, user_id)
 
-            # # Chat参加者に通知
+            # Chat参加者に通知
             async for (
                 participant
             ) in ChatParticipants.read_all_active_notification_users(

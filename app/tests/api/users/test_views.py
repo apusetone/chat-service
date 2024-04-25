@@ -123,9 +123,6 @@ async def test_users_read(
     }
     assert expected == response.json()
 
-    # TODO: skip test due to using dependencies=[Depends(RateLimiter(times=3, seconds=10))],
-    pass
-
 
 @pytest.mark.anyio
 async def test_users_update(

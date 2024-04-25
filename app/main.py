@@ -9,7 +9,7 @@ from app.commons.logging import LoggingContextRoute
 from app.commons.types import CacheType
 from app.models.schema import AccessTokenSchema
 from app.settings import settings
-from app.ws.messages.views import OldWebsocketEndpointView, WebsocketEndpointView
+from app.ws.messages.views import WebsocketEndpointView
 
 app = FastAPI(title="chat-service")
 
