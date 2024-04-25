@@ -1,4 +1,7 @@
+import random
+import string
 from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock
 
 import pytest
 from httpx import AsyncClient
@@ -6,11 +9,12 @@ from pytest_mock import MockFixture
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.commons.redis_cache import RedisCache
+from app.commons.types import NotificationType, PlatformType
+from app.models import Session, User
+from app.settings import settings
 
 
 async def setup_data(a_session: AsyncSession) -> None:
-    from app.commons.types import NotificationType, PlatformType
-    from app.models import Session, User
 
     # Userモデルのインスタンスを作成
     user1 = User(
@@ -73,26 +77,22 @@ async def test_auth_login(
     """Login"""
 
     # setup
-    # await setup_data(session)
+    await setup_data(session)
 
-    # mocker.patch.object(FastAPILimiter, "init", return_value=MagicMock())
-    # mocker.patch.object(RateLimiter, "__call__", return_value=MagicMock())
-    # mocker.patch.object(
-    #     utils, "generate_random_token", return_value="zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"
-    # )
-    # mocker.patch.object(utils, "generate_two_fa_code", return_value="123456")
+    mocker.patch(
+        "app.commons.utils.secrets.choice",
+        return_value="a",
+    )
+    mocker.patch("app.commons.utils.random.randint", return_value=0)
 
-    # # execute
-    # response = await ac.post("/api/auth/login", json={"email": "test_email@email.com"})
+    # execute
+    response = await ac.post("/api/auth/login", json={"email": "user1@example.com"})
 
-    # assert 201 == response.status_code
-    # expected = {
-    #     "token": "zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv",
-    # }
-    # assert expected == response.json()
-
-    # TODO: skip test due to using dependencies=[Depends(RateLimiter(times=3, seconds=10))],
-    pass
+    assert 201 == response.status_code
+    expected = {
+        "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    }
+    assert expected == response.json()
 
 
 @pytest.mark.anyio
@@ -102,24 +102,31 @@ async def test_auth_two_fa(
     """TwoFa"""
 
     # setup
-    # await setup_data(session)
+    await setup_data(session)
 
-    # mocker.patch.object(FastAPILimiter, "init", return_value=MagicMock())
-    # mocker.patch.object(RateLimiter, "__call__", return_value=MagicMock())
-    # mocker.patch.object(
-    #     utils, "generate_random_token", return_value="zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"
-    # )
-    # mocker.patch.object(utils, "generate_two_fa_code", return_value="123456")
+    mocker.patch(
+        "app.commons.utils.secrets.choice",
+        return_value="a",
+    )
+    mocker.patch("app.commons.utils.random.randint", return_value=0)
 
-    # # execute
-    # response = await ac.post("/api/auth/2fa", json={"code": "123456", "token": "zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"})
+    # add to redis
+    response = await ac.post("/api/auth/login", json={"email": "user1@example.com"})
 
-    # assert 201 == response.status_code
-    # expected = {"token": "zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"}
-    # assert expected == response.json()
+    # execute
+    response = await ac.post(
+        "/api/auth/2fa",
+        json={"code": "000000", "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+    )
 
-    # TODO: skip test due to using dependencies=[Depends(RateLimiter(times=3, seconds=10))],
-    pass
+    assert 201 == response.status_code
+    expected = {
+        "access_token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "id": 1,
+        "refresh_token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "token_type": "access_token",
+    }
+    assert expected == response.json()
 
 
 @pytest.mark.anyio
@@ -129,28 +136,26 @@ async def test_auth_refresh(
     """Refresh"""
 
     # setup
-    # await setup_data(session)
+    await setup_data(session)
 
-    # mocker.patch.object(
-    #     utils, "generate_random_token", return_value="zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"
-    # )
-    # mocker.patch.object(utils, "generate_two_fa_code", return_value="123456")
+    mocker.patch(
+        "app.commons.utils.secrets.choice",
+        return_value="b",
+    )
+    mocker.patch("app.commons.utils.random.randint", return_value=0)
 
-    # # execute
-    # response = await ac.post(
-    #     "/api/auth/refresh", headers={"Authorization": "Bearer refresh_token_1"}
-    # )
+    # execute
+    response = await ac.post(
+        "/api/auth/refresh", headers={"Authorization": "Bearer refresh_token_1"}
+    )
 
-    # assert 201 == response.status_code
-    # expected = {
-    #     "access_token": "zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv",
-    #     "token_type": "refresh_token",
-    #     "id": 1,
-    # }
-    # assert expected == response.json()
-
-    # TODO: skip test due to using dependencies=[Depends(RateLimiter(times=3, seconds=10))],
-    pass
+    assert 201 == response.status_code
+    expected = {
+        "access_token": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "token_type": "refresh_token",
+        "id": 1,
+    }
+    assert expected == response.json()
 
 
 @pytest.mark.anyio
@@ -162,25 +167,29 @@ async def test_auth_logout(
     # setup
     await setup_data(session)
 
-    mocker.patch.object(
-        RedisCache,
-        "scan_with_suffix",
-        return_value={"user_id": 1},
+    mocker.patch(
+        "app.commons.utils.secrets.choice",
+        return_value="a",
+    )
+    mocker.patch("app.commons.utils.random.randint", return_value=0)
+
+    # auth
+    response = await ac.post("/api/auth/login", json={"email": "user1@example.com"})
+    response = await ac.post(
+        "/api/auth/2fa",
+        json={"code": "000000", "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
     )
 
     # execute
     response = await ac.post(
         "/api/auth/logout",
-        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        headers={"Authorization": "Bearer aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
         json={
             "refresh_token": "refresh_token_1",
         },
     )
 
     assert 201 == response.status_code
-
-    # TODO: skip test due to using dependencies=[Depends(RateLimiter(times=3, seconds=10))],
-    pass
 
 
 @pytest.mark.anyio
@@ -192,24 +201,23 @@ async def test_auth_unregister(
     # setup
     await setup_data(session)
 
-    mocker.patch.object(
-        RedisCache,
-        "scan_with_suffix",
-        return_value={"user_id": 1},
+    mocker.patch(
+        "app.commons.utils.secrets.choice",
+        return_value="a",
     )
-    mocker.patch.object(
-        RedisCache,
-        "delete_with_prefix",
-        return_value=None,
+    mocker.patch("app.commons.utils.random.randint", return_value=0)
+
+    # auth
+    response = await ac.post("/api/auth/login", json={"email": "user1@example.com"})
+    response = await ac.post(
+        "/api/auth/2fa",
+        json={"code": "000000", "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
     )
 
     # execute
     response = await ac.delete(
         "/api/auth/unregister",
-        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        headers={"Authorization": "Bearer aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
     )
 
     assert 204 == response.status_code
-
-    # TODO: skip test due to using dependencies=[Depends(RateLimiter(times=3, seconds=10))],
-    pass

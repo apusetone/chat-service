@@ -12,7 +12,7 @@ test:
 		black app && \
 		ruff app && \
 		mypy app && \
-		pytest app"
+		APP_CONFIG_FILE=test pytest app"
 
 clean:
 	docker rm -f $$(docker ps -aq)

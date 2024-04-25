@@ -6,6 +6,7 @@ from app.commons.authentication import (
     RefreshTokenAuthentication,
 )
 from app.models.schema import AccessTokenSchema, RefreshTokenSchema
+from app.settings import settings
 
 from .schema import (
     LoginRequest,
@@ -23,7 +24,9 @@ router = APIRouter(prefix="/auth")
 @router.post(
     "/login",
     response_model=LoginResponse,
-    dependencies=[Depends(RateLimiter(times=3, seconds=10))],
+    dependencies=(
+        [Depends(RateLimiter(times=3, seconds=10))] if settings.THROTTLING else []
+    ),
     status_code=status.HTTP_201_CREATED,
 )
 async def login(
@@ -36,7 +39,9 @@ async def login(
 @router.post(
     "/2fa",
     response_model=TwoFaResponse,
-    dependencies=[Depends(RateLimiter(times=3, seconds=10))],
+    dependencies=(
+        [Depends(RateLimiter(times=3, seconds=10))] if settings.THROTTLING else []
+    ),
     status_code=status.HTTP_201_CREATED,
 )
 async def two_fa(
@@ -49,10 +54,12 @@ async def two_fa(
 @router.post(
     "/refresh",
     response_model=RefreshResponse,
-    dependencies=[
-        Depends(RateLimiter(times=3, seconds=10)),
-        Depends(RefreshTokenAuthentication.get_current_user),
-    ],
+    dependencies=(
+        [
+            Depends(RefreshTokenAuthentication.get_current_user),
+        ]
+        + ([Depends(RateLimiter(times=3, seconds=10))] if settings.THROTTLING else [])
+    ),
     status_code=status.HTTP_201_CREATED,
 )
 async def refresh(

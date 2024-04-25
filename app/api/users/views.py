@@ -3,6 +3,7 @@ from fastapi_limiter.depends import RateLimiter
 
 from app.commons.authentication import AccessTokenAuthentication
 from app.models.schema import AccessTokenSchema
+from app.settings import settings
 
 from .schema import PartialUpdateUserRequest, ReadUserResponse, UpdateUserRequest
 from .use_cases import PartialUpdateUser, ReadUser, UpdateUser
@@ -27,10 +28,12 @@ async def read(
 
 @router.put(
     "",
-    dependencies=[
-        Depends(AccessTokenAuthentication.get_current_user),
-        Depends(RateLimiter(times=3, seconds=10)),
-    ],
+    dependencies=(
+        [
+            Depends(AccessTokenAuthentication.get_current_user),
+        ]
+        + ([Depends(RateLimiter(times=3, seconds=10))] if settings.THROTTLING else [])
+    ),
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def update(
@@ -43,10 +46,12 @@ async def update(
 
 @router.patch(
     "/verify_email",
-    dependencies=[
-        Depends(AccessTokenAuthentication.get_current_user),
-        Depends(RateLimiter(times=3, seconds=10)),
-    ],
+    dependencies=(
+        [
+            Depends(AccessTokenAuthentication.get_current_user),
+        ]
+        + ([Depends(RateLimiter(times=3, seconds=10))] if settings.THROTTLING else [])
+    ),
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def partial_update(

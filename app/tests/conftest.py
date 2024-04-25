@@ -26,7 +26,7 @@ async def ac() -> AsyncGenerator:
 
 @pytest.fixture(scope="session")
 def setup_db() -> Generator:
-    engine = create_engine(f"{settings.DB_URI.replace('+asyncpg', '')}_test")
+    engine = create_engine(f"{settings.DB_URI.replace('+asyncpg', '')}")
     conn = engine.connect()
     # Terminate transaction
     conn.execute(text("commit"))
@@ -58,7 +58,7 @@ def setup_db() -> Generator:
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db(setup_db: Generator) -> Generator:
-    engine = create_engine(f"{settings.DB_URI.replace('+asyncpg', '')}_test")
+    engine = create_engine(f"{settings.DB_URI.replace('+asyncpg', '')}")
 
     with engine.begin():
         Base.metadata.drop_all(engine)
@@ -72,7 +72,7 @@ def setup_test_db(setup_db: Generator) -> Generator:
 @pytest.fixture
 async def session() -> AsyncGenerator:
     # https://github.com/sqlalchemy/sqlalchemy/issues/5811#issuecomment-756269881
-    async_engine = create_async_engine(f"{settings.DB_URI}_test")
+    async_engine = create_async_engine(f"{settings.DB_URI}")
     async with async_engine.connect() as conn:
         await conn.begin()
         await conn.begin_nested()
