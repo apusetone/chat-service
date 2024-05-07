@@ -21,7 +21,7 @@ async def setup_data(a_session: AsyncSession) -> None:
         id=1,
         username="user1",
         email="user1@example.com",
-        new_email=None,
+        new_email="new-user1@example.com",
         notification_type=NotificationType.DISABLED,
         first_name="User",
         last_name="One",
@@ -89,12 +89,6 @@ async def test_users_read(
     # setup
     await setup_data(session)
 
-    # mocker.patch.object(FastAPILimiter, "init", return_value=MagicMock())
-    # mocker.patch.object(RateLimiter, "__call__", return_value=MagicMock())
-    # mocker.patch.object(
-    #     utils, "generate_random_token", return_value="zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"
-    # )
-    # mocker.patch.object(utils, "generate_two_fa_code", return_value="123456")
     mocker.patch.object(
         RedisCache,
         "scan_with_suffix",
@@ -108,7 +102,6 @@ async def test_users_read(
     )
 
     assert 200 == response.status_code
-    print(response.json())
     expected = {
         "id": 1,
         "created_at": now_datetime.isoformat(),
@@ -118,7 +111,7 @@ async def test_users_read(
         "first_name": "User",
         "last_name": "One",
         "email": "user1@example.com",
-        "new_email": None,
+        "new_email": "new-user1@example.com",
         "notification_type": "disabled",
     }
     assert expected == response.json()
@@ -131,28 +124,29 @@ async def test_users_update(
     """Update"""
 
     # setup
-    # await setup_data(session)
+    await setup_data(session)
 
-    # mocker.patch.object(
-    #     utils, "generate_random_token", return_value="zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"
-    # )
-    # mocker.patch.object(utils, "generate_two_fa_code", return_value="123456")
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
 
-    # # execute
-    # response = await ac.put(
-    #     "/api/users", headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
-    # )
+    # execute
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": False,
+            "username": "testuser12345",
+            "first_name": "John",
+            "last_name": "Smith",
+            "new_email": None,
+            "notification_type": "mobile_push",
+        },
+    )
 
-    # assert 201 == response.status_code
-    # expected = {
-    #     "access_token": "zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv",
-    #     "token_type": "refresh_token",
-    #     "id": 1,
-    # }
-    # assert expected == response.json()
-
-    # TODO: skip test due to using dependencies=[Depends(RateLimiter(times=3, seconds=10))],
-    pass
+    assert 204 == response.status_code
 
 
 @pytest.mark.anyio
@@ -162,26 +156,24 @@ async def test_users_partial_update(
     """PartialUpdate"""
 
     # setup
-    # await setup_data(session)
+    await setup_data(session)
 
-    # mocker.patch.object(
-    #     RedisCache,
-    #     "scan_with_suffix",
-    #     return_value={"user_id": 1},
-    # )
-    # mocker.patch.object(
-    #     RedisCache,
-    #     "delete_with_prefix",
-    #     return_value=None,
-    # )
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+    mocker.patch.object(
+        RedisCache,
+        "get",
+        return_value={"code": "123456"},
+    )
 
-    # # execute
-    # response = await ac.patch(
-    #     "/api/users",
-    #     headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
-    # )
+    # execute
+    response = await ac.patch(
+        "/api/users/verify_email",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={"code": "123456"},
+    )
 
-    # assert 204 == response.status_code
-
-    # TODO: skip test due to using dependencies=[Depends(RateLimiter(times=3, seconds=10))],
-    pass
+    assert 204 == response.status_code

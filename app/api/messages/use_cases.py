@@ -90,6 +90,7 @@ class CreateMessage:
     async def execute(
         self, user_id: int, chat_id: int, request: CreateMessageRequest
     ) -> CreateMessageResponse:
+
         async with self.async_session() as a_session:
             # Messageの関係者でない場合は403エラーを返却する
             if (

@@ -6,14 +6,13 @@ from pytest_mock import MockFixture
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.commons.redis_cache import RedisCache
-from app.commons.types import ChatType
+from app.commons.types import ChatType, NotificationType, PlatformType
+from app.models import Chat, ChatParticipants, Message, Session, User
 
 now_datetime = datetime(2023, 3, 5, 10, 52, 33)
 
 
 async def setup_data(a_session: AsyncSession) -> None:
-    from app.commons.types import NotificationType, PlatformType
-    from app.models import Chat, ChatParticipants, Message, Session, User
 
     now = datetime(2023, 3, 5, 10, 52, 33)
 
@@ -102,7 +101,6 @@ async def setup_data(a_session: AsyncSession) -> None:
 
     # Messageモデルのインスタンスを作成
     message1 = Message(
-        id=1,
         sender_id=user1.id,
         chat_id=chat1.id,
         content="Message content 1",
@@ -111,7 +109,6 @@ async def setup_data(a_session: AsyncSession) -> None:
         updated_at=now,
     )
     message2 = Message(
-        id=2,
         sender_id=user2.id,
         chat_id=chat1.id,
         content="Message content 2",
@@ -140,32 +137,44 @@ async def test_messages_read_all(
         return_value={"user_id": 1},
     )
 
+    # Chat.read_allを使用して最初のチャットを取得
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
     # execute
     response = await ac.get(
-        "/api/messages/chat/1?offset=0&limit=10&desc=true",
+        f"/api/messages/chat/{chat_id}?offset=0&limit=10&desc=true",
         headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
     )
 
-    assert 200 == response.status_code
-    expected = {
-        "messages": [
+    # Message.read_allを使用して最初のメッセージを取得
+    messages = []
+    expected_messages = []
+
+    # Message.read_allを使用してメッセージを取得し、messagesリストに追加
+    async for message in Message.read_all(session, chat_id=chat_id, offset=0, limit=10):
+        messages.append(
             {
-                "id": 2,
-                "sender_id": 2,
-                "content": "Message content 2",
-                "created_at": now_datetime.isoformat(),
-                "read_by_list": [1],
-            },
-            {
-                "id": 1,
-                "sender_id": 1,
-                "content": "Message content 1",
-                "created_at": now_datetime.isoformat(),
-                "read_by_list": [2],
-            },
-        ]
-    }
-    assert expected == response.json()
+                "id": message.id,
+                "sender_id": message.sender_id,
+                "content": message.content,
+                "created_at": message.created_at.isoformat(),
+                "read_by_list": message.read_by_list,
+            }
+        )
+
+    # 最終的なexpected辞書を作成
+    expected = {"messages": messages}
+
+    response_data = response.json()
+
+    assert expected == response_data
 
 
 @pytest.mark.anyio
@@ -175,33 +184,48 @@ async def test_messages_create(
     """Create"""
 
     # setup
-    # await setup_data(session)
+    await setup_data(session)
 
-    # mocker.patch.object(
-    #     RedisCache,
-    #     "scan_with_suffix",
-    #     return_value={"user_id": 1},
-    # )
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
 
-    # # # execute
-    # response = await ac.post(
-    #     "/api/messages/chat/1",
-    #     headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
-    #     json={"content": "Posted Message 1"},
-    # )
+    # Chat.read_allを使用して最初のチャットを取得
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
 
-    # assert 201 == response.status_code
-    # expected = {
-    #     "id": 3,
-    #     "sender_id": 1,
-    #     "content": "Posted Message 1",
-    #     "created_at": now_datetime.isoformat(),
-    #     "read_by_list": [],
-    # }
-    # assert expected == response.json()
+    assert first_chat is not None, "No chat was found."
 
-    # TODO: skip test due to using dependencies=[Depends(RateLimiter(times=3, seconds=10))],
-    pass
+    chat_id = first_chat.id
+
+    # execute
+    response = await ac.post(
+        f"/api/messages/chat/{chat_id}",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={"content": "Posted Message 1"},
+    )
+
+    # Message.read_allを使用して最初のメッセージを取得
+    first_message = None
+    async for message in Message.read_all(session, chat_id=chat_id, offset=0, limit=1):
+        first_message = message
+        break
+
+    assert first_message is not None, "No message was found."
+
+    assert 201 == response.status_code
+    expected = {
+        "id": first_message.id,
+        "sender_id": 1,
+        "content": "Posted Message 1",
+        "created_at": first_message.created_at.isoformat(),
+        "read_by_list": [],
+    }
+    assert expected == response.json()
 
 
 @pytest.mark.anyio

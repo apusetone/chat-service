@@ -70,7 +70,7 @@ class RefreshTokenAuthentication:
         return RefreshTokenSchema(refresh_token=cred.credentials)
 
 
-async def websoket_headers(
+async def websocket_headers(
     websocket: WebSocket,
     authorization: str | None = Header(default=None),
 ) -> RefreshTokenSchema:

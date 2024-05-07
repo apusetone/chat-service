@@ -5,6 +5,8 @@ from httpx import AsyncClient
 from pytest_mock import MockFixture
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.commons.redis_cache import RedisCache
+
 now_datetime = datetime(2023, 3, 5, 10, 52, 33)
 
 
@@ -79,38 +81,29 @@ async def setup_data(a_session: AsyncSession) -> None:
 
 
 @pytest.mark.anyio
-async def test_sessions_read(
+async def test_sessions_update(
     ac: AsyncClient, session: AsyncSession, mocker: MockFixture
 ) -> None:
     """Update"""
 
     # setup
-    # await setup_data(session)
+    await setup_data(session)
 
-    # mocker.patch.object(FastAPILimiter, "init", return_value=MagicMock())
-    # mocker.patch.object(RateLimiter, "__call__", return_value=MagicMock())
-    # mocker.patch.object(
-    #     utils, "generate_random_token", return_value="zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"
-    # )
-    # mocker.patch.object(utils, "generate_two_fa_code", return_value="123456")
-    # mocker.patch.object(
-    #     RedisCache,
-    #     "scan_with_suffix",
-    #     return_value={"user_id": 1},
-    # )
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
 
-    # # execute
-    # response = await ac.update(
-    #     "/api/sessions",
-    #     headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
-    #     json={
-    #         "refresh_token": "refresh_token_1",
-    #         "device_token": "5dcaed99-e1e0-44dc-bde2-b96188b99e9e",
-    #         "platform_type": "ios",
-    #     },
-    # )
+    # execute
+    response = await ac.put(
+        "/api/sessions",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "refresh_token": "refresh_token_1",
+            "device_token": "5dcaed99-e1e0-44dc-bde2-b96188b99e9e",
+            "platform_type": "ios",
+        },
+    )
 
-    # assert 204 == response.status_code
-
-    # TODO: skip test due to using dependencies=[Depends(RateLimiter(times=3, seconds=10))],
-    pass
+    assert 204 == response.status_code

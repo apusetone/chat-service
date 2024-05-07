@@ -6,14 +6,13 @@ from pytest_mock import MockFixture
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.commons.redis_cache import RedisCache
-from app.commons.types import ChatType
+from app.commons.types import ChatType, NotificationType, PlatformType
+from app.models import Chat, ChatParticipants, Session, User
 
 now_datetime = datetime(2023, 3, 5, 10, 52, 33)
 
 
 async def setup_data(a_session: AsyncSession) -> None:
-    from app.commons.types import NotificationType, PlatformType
-    from app.models import Chat, ChatParticipants, Session, User
 
     now = datetime(2023, 3, 5, 10, 52, 33)
 
@@ -93,7 +92,6 @@ async def setup_data(a_session: AsyncSession) -> None:
 
     # Chatモデルのインスタンスを作成
     chat1 = Chat(
-        id=1,
         created_by=user1.id,
         chat_type=ChatType.DIRECT,
         name="Chat name 1",
@@ -131,6 +129,14 @@ async def test_chats_read_all(
         return_value={"user_id": 1},
     )
 
+    # Chat.read_allを使用して最初のチャットを取得
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
     # execute
     response = await ac.get(
         "/api/chats?offset=0&limit=10&desc=true",
@@ -141,7 +147,7 @@ async def test_chats_read_all(
     expected = {
         "chats": [
             {
-                "id": 1,
+                "id": first_chat.id,
                 "created_at": now_datetime.isoformat(),
                 "updated_at": now_datetime.isoformat(),
                 "chat_type": "direct",
@@ -159,36 +165,41 @@ async def test_chats_create(
     """Create"""
 
     # setup
-    # await setup_data(session)
+    await setup_data(session)
 
-    # mocker.patch.object(
-    #     RedisCache,
-    #     "scan_with_suffix",
-    #     return_value={"user_id": 1},
-    # )
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
 
-    # # execute
-    # response = await ac.post(
-    #     "/api/chats",
-    #     headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
-    #     json={
-    #         "name": "New room",
-    #         "participant_names": ["user2", "user3"],
-    #     },
-    # )
+    # execute
+    response = await ac.post(
+        "/api/chats",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "name": "New room",
+            "participant_names": ["user2", "user3"],
+        },
+    )
 
-    # assert 201 == response.status_code
-    # expected = {
-    #     "id": 2,
-    #     "created_at": now_datetime.isoformat(),
-    #     "updated_at": now_datetime.isoformat(),
-    #     "chat_type": "direct",
-    #     "name": "New room",
-    # }
-    # assert expected == response.json()
+    # Chat.read_allを使用して最初のチャットを取得
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
 
-    # TODO: skip test due to using dependencies=[Depends(RateLimiter(times=3, seconds=10))],
-    pass
+    assert first_chat is not None, "No chat was found."
+
+    assert 201 == response.status_code
+    expected = {
+        "id": first_chat.id,
+        "created_at": first_chat.created_at.isoformat(),
+        "updated_at": first_chat.updated_at.isoformat(),
+        "chat_type": "group",
+        "name": "New room",
+    }
+    assert expected == response.json()
 
 
 @pytest.mark.anyio
@@ -200,6 +211,14 @@ async def test_chats_read_all_participants(
     # setup
     await setup_data(session)
 
+    # Chat.read_allを使用して最初のチャットを取得
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
     mocker.patch.object(
         RedisCache,
         "scan_with_suffix",
@@ -208,34 +227,39 @@ async def test_chats_read_all_participants(
 
     # execute
     response = await ac.get(
-        "/api/chats/1/participants",
+        f"/api/chats/{first_chat.id}/participants",
         headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
     )
 
     assert 200 == response.status_code
+
+    # 期待される結果と取得した参加者のリストを比較
     expected = {
         "participants": [
             {
-                "id": 1,
                 "created_at": now_datetime.isoformat(),
-                "updated_at": now_datetime.isoformat(),
                 "first_name": "User",
-                "last_name": "One",
-                "username": "user1",
+                "id": 1,
                 "is_name_visible": True,
+                "last_name": "One",
+                "updated_at": now_datetime.isoformat(),
+                "username": "user1",
             },
             {
-                "id": 2,
                 "created_at": now_datetime.isoformat(),
-                "updated_at": now_datetime.isoformat(),
                 "first_name": "ANONYMOUS",
-                "last_name": "ANONYMOUS",
-                "username": "user2",
+                "id": 2,
                 "is_name_visible": False,
+                "last_name": "ANONYMOUS",
+                "updated_at": now_datetime.isoformat(),
+                "username": "user2",
             },
         ]
     }
-    assert expected == response.json()
+
+    # response.json()が期待される結果と一致するか検証
+    response_data = response.json()
+    assert expected == response_data, "Response data does not match expected result."
 
 
 @pytest.mark.anyio
@@ -247,6 +271,14 @@ async def test_chats_delete(
     # setup
     await setup_data(session)
 
+    # Chat.read_allを使用して最初のチャットを取得
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
     mocker.patch.object(
         RedisCache,
         "scan_with_suffix",
@@ -255,7 +287,7 @@ async def test_chats_delete(
 
     # execute
     response = await ac.delete(
-        "/api/chats/1",
+        f"/api/chats/{first_chat.id}",
         headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
     )
 

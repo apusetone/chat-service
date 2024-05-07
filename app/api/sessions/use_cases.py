@@ -23,15 +23,3 @@ class UpdateSession:
             )
             await session.refresh(session_instance)
             return SessionSchema.model_validate(session_instance)
-
-
-class DeleteSession:
-    def __init__(self, session: AsyncSession) -> None:
-        self.async_session = session
-
-    async def execute(self, session_instance_id: int) -> None:
-        async with self.async_session.begin() as session:
-            session_instance = await Session.read_by_id(session, session_instance_id)
-            if not session_instance:
-                return
-            await Session.delete(session, session_instance)

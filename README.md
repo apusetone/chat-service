@@ -60,7 +60,7 @@ Connected (press CTRL+C to quit)
 
     - Warning箇所の修正
 
-    - スロットリングを利用しているviewテストをskipしている
+    - [x] スロットリングを利用しているviewテストをskipしている
 
     - awsクライアントによる通知送信部分のテスト
 
@@ -80,7 +80,7 @@ Connected (press CTRL+C to quit)
 
   - awsクライアントによる通知送信している箇所の挙動確認
 
-- [ ] APIのレスポンス形式について
+- [x] APIのレスポンス形式について
 
   - リクエスト形式を誤って実行したときなどにおいて、FastAPIと分かる422エラーとBodyが返却されるので隠蔽が必要
 
