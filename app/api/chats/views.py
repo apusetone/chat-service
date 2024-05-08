@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Body, Depends, Path, Request, status
+from fastapi_cache.decorator import cache
 
 from app.commons.authentication import AccessTokenAuthentication
 from app.models.schema import AccessTokenSchema
@@ -22,6 +23,7 @@ router = APIRouter(prefix="/chats")
     ],
     status_code=status.HTTP_200_OK,
 )
+@cache(expire=10)
 async def read_all_chats(
     query_params: ReadAllChatRequest = Depends(),
     schema: AccessTokenSchema = Depends(AccessTokenAuthentication.get_current_user),
@@ -39,6 +41,7 @@ async def read_all_chats(
     ],
     status_code=status.HTTP_200_OK,
 )
+@cache(expire=10)
 async def read_all_chat_participants(
     request: Request,
     chat_id: int = Path(..., description=""),

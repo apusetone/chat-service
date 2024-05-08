@@ -1,4 +1,6 @@
+from functools import wraps
 from typing import AsyncGenerator, Generator
+from unittest import mock
 
 import pytest
 from httpx import AsyncClient
@@ -8,9 +10,22 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, SessionTransaction
 
 from app.db import get_session
-from app.main import app
 from app.models.base import Base
 from app.settings import settings
+
+
+def mock_cache(*args, **kwargs):
+    def wrapper(func):
+        @wraps(func)
+        async def inner(*args, **kwargs):
+            return await func(*args, **kwargs)
+
+        return inner
+
+    return wrapper
+
+
+mock.patch("fastapi_cache.decorator.cache", mock_cache).start()
 
 
 @pytest.fixture
@@ -20,6 +35,8 @@ def anyio_backend() -> str:
 
 @pytest.fixture
 async def ac() -> AsyncGenerator:
+    from app.main import app
+
     async with AsyncClient(app=app, base_url="https://test") as c:
         yield c
 
@@ -71,6 +88,8 @@ def setup_test_db(setup_db: Generator) -> Generator:
 
 @pytest.fixture
 async def session() -> AsyncGenerator:
+    from app.main import app
+
     # https://github.com/sqlalchemy/sqlalchemy/issues/5811#issuecomment-756269881
     async_engine = create_async_engine(f"{settings.DB_URI}")
     async with async_engine.connect() as conn:

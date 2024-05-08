@@ -6,6 +6,7 @@ class CacheType(IntEnum):
     TWO_FA = 1
     ACCESS_TOKEN = 2
     PUBSUB = 3
+    CACHE = 4
 
 
 class TokenType(Enum):

@@ -4,6 +4,8 @@ import redis.asyncio as redis
 from fastapi import Depends, FastAPI, Request, WebSocket
 from fastapi.exceptions import FastAPIError, RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
 from fastapi_limiter import FastAPILimiter
 
 from app.api.main import router as api_router
@@ -44,7 +46,6 @@ async def bad_request_validation_exception_handler(
 async def fastapi_internal_server_error_handler(request: Request, exc: FastAPIError):
     # Log the FastAPI error with traceback
     logging.error("An internal server error occurred (FastAPI error)", exc_info=exc)
-
     return JSONResponse(
         status_code=500,
         content={
@@ -72,12 +73,19 @@ async def all_exception_handler(request: Request, exc: Exception):
 
 @app.on_event("startup")
 async def startup():
-    redis_connection = redis.from_url(
+    # FastAPILimiter用のRedis接続
+    redis_throttling_connection = redis.from_url(
         f"{settings.REDIS_URI}/{CacheType.THROTTLING}",
         encoding="utf-8",
         decode_responses=True,
     )
-    await FastAPILimiter.init(redis_connection)
+    await FastAPILimiter.init(redis_throttling_connection)
+
+    # FastAPICache用の別のRedis接続
+    redis_cache_connection = redis.from_url(
+        f"{settings.REDIS_URI}/{CacheType.CACHE}",
+    )
+    FastAPICache.init(RedisBackend(redis_cache_connection), prefix="fastapi-cache")
 
 
 # TODO: viewsに配置したかった
