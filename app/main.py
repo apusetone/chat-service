@@ -11,6 +11,7 @@ from fastapi_limiter import FastAPILimiter
 from app.api.main import router as api_router
 from app.commons.authentication import websocket_headers
 from app.commons.logging import LoggingContextRoute
+from app.commons.middlewares import TimeoutMiddleware
 from app.commons.types import CacheType
 from app.models.schema import AccessTokenSchema
 from app.settings import settings
@@ -19,7 +20,7 @@ from app.ws.messages.views import WebsocketEndpointView
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="chat-service")
-
+app.add_middleware(TimeoutMiddleware, timeout=settings.REQUEST_TIMEOUT)
 app.include_router(api_router, prefix="/api")
 app.router.route_class = LoggingContextRoute
 

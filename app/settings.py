@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     ECHO_SQL: bool
     REDIS_URI: str
     THROTTLING: bool
+    REQUEST_TIMEOUT: int
 
     model_config = SettingsConfigDict(
         env_file=Path(__file__).parent / f"config/{os.environ['APP_CONFIG_FILE']}.env",
