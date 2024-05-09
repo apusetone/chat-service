@@ -83,6 +83,18 @@ class WebsocketEndpointView:
             await pubsub.subscribe(channel_name)
             return pubsub
 
+        async def heartbeat(websocket):
+            while True:
+                try:
+                    # ここで 'ping' メッセージを送信します。
+                    # WebSocketの 'ping_interval' と 'ping_timeout' を設定している場合は、
+                    # その間隔で 'ping' を送信する必要があります。
+                    await websocket.send_text("ping")
+                    await asyncio.sleep(10)  # 10秒ごとに 'ping' を送信
+                except asyncio.CancelledError:
+                    # タスクがキャンセルされた場合は終了
+                    break
+
         async def listen_to_pubsub(pubsub, lock, websocket):
             while True:
                 async with lock:
@@ -135,7 +147,8 @@ class WebsocketEndpointView:
             self.pubsub_session, f"chat_messages_{chat_id}"
         )
 
-        # Pub/SubのリッスンとWebSocketの受信を並行して実行
+        # ハートビートとPub/SubのリッスンとWebSocketの受信を並行して実行
+        heartbeat_task = asyncio.create_task(heartbeat(websocket))
         listen_task = asyncio.create_task(
             listen_to_pubsub(listen_pubsub, lock, websocket)
         )
@@ -151,6 +164,7 @@ class WebsocketEndpointView:
             logger.info(f"WebSocket disconnected with code: {e.code}")
         finally:
             # タスクのキャンセルと購読解除
+            heartbeat_task.cancel()
             listen_task.cancel()
             receive_task.cancel()
             await listen_pubsub.unsubscribe(channel_name)
