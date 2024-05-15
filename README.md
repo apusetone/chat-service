@@ -58,7 +58,7 @@ Connected (press CTRL+C to quit)
 
     - 異常系
 
-    - Warning箇所の修正
+    - [x] Warning箇所の修正
 
     - [x] スロットリングを利用しているviewテストをskipしている
 
