@@ -37,7 +37,9 @@ def anyio_backend() -> str:
 async def ac() -> AsyncGenerator:
     from app.main import app
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="https://test") as c:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="https://test"
+    ) as c:
         yield c
 
 

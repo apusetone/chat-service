@@ -155,7 +155,6 @@ async def test_messages_read_all(
 
     # Message.read_allを使用して最初のメッセージを取得
     messages = []
-    expected_messages = []
 
     # Message.read_allを使用してメッセージを取得し、messagesリストに追加
     async for message in Message.read_all(session, chat_id=chat_id, offset=0, limit=10):

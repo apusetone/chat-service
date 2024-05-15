@@ -42,6 +42,7 @@ async def lifespan(app: FastAPI):
     finally:
         pass
 
+
 app = FastAPI(title="chat-service", lifespan=lifespan)
 app.add_middleware(TimeoutMiddleware, timeout=settings.REQUEST_TIMEOUT)
 app.include_router(api_router, prefix="/api")
@@ -93,7 +94,6 @@ async def all_exception_handler(request: Request, exc: Exception):
             "detail": [],
         },
     )
-
 
 
 # TODO: viewsに配置したかった

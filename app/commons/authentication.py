@@ -104,7 +104,7 @@ class SignatureV4Authentication:
         try:
             # 署名を追加（これにより、正しい署名情報がヘッダーにセットされる）
             self.auth.add_auth(aws_request)
-        except (NoCredentialsError, PartialCredentialsError) as e:
+        except (NoCredentialsError, PartialCredentialsError):
             # 署名に関する例外が発生した場合のエラーハンドリング
             raise HTTPException(
                 status_code=401,

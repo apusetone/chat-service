@@ -61,7 +61,9 @@ class RedisCache:
             try:
                 cursor = "0"
                 while cursor != 0:
-                    cursor, scan_keys = await cache.scan(cursor=cursor, match=f"*{suffix}")
+                    cursor, scan_keys = await cache.scan(
+                        cursor=cursor, match=f"*{suffix}"
+                    )
                     if scan_keys:
                         json_str = await cache.get(scan_keys[0])
                         if json_str:
@@ -96,7 +98,9 @@ class RedisCache:
                 cursor = "0"
                 deleted_count = 0
                 while cursor != 0:
-                    cursor, scan_keys = await cache.scan(cursor=cursor, match=f"{prefix}*")
+                    cursor, scan_keys = await cache.scan(
+                        cursor=cursor, match=f"{prefix}*"
+                    )
                     for key in scan_keys:
                         deleted_count += await cache.delete(key)
                 return deleted_count

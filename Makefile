@@ -10,7 +10,7 @@ up:
 test:
 	docker-compose run --rm fastapi sh -c "\
 		black app && \
-		ruff app && \
+		ruff check app && \
 		mypy app && \
 		APP_CONFIG_FILE=test pytest app"
 
