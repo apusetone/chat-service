@@ -29,3 +29,9 @@ class PlatformType(IntEnum):
     UNKNOWN = 0
     IOS = 1
     ANDROID = 2
+
+
+class AWSServiceType(Enum):
+    S3 = "s3"
+    SNS = "sns"
+    SES = "ses"

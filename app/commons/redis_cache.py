@@ -14,13 +14,11 @@ logger = logging.getLogger(__name__)
 
 
 class RedisCache:
-
     cache_type: CacheType
+    _instances: dict[CacheType, "RedisCache"] = {}
+    _lock: threading.Lock = threading.Lock()
 
-    _instances = {}
-    _lock = threading.Lock()
-
-    def __new__(cls, cache_type: CacheType, expiry=60 * 60 * 24 * 1):
+    def __new__(cls, cache_type: CacheType, expiry: int = 60 * 60 * 24 * 1):
         with cls._lock:
             if cache_type not in cls._instances:
                 instance = super(RedisCache, cls).__new__(cls)
@@ -28,9 +26,9 @@ class RedisCache:
                 instance.cache_type = cache_type
                 instance.expiry = expiry
                 cls._instances[cache_type] = instance
-        return cls._instances[cache_type]
+            return cls._instances[cache_type]
 
-    def __init__(self, cache_type: CacheType, expiry=60 * 60 * 24 * 1):
+    def __init__(self, cache_type: CacheType, expiry: int = 60 * 60 * 24 * 1):
         # インスタンスが既に存在する場合は初期化をスキップ
         if type(self)._instances.get(self.cache_type) is not self.__class__:
             self.uri = settings.REDIS_URI
