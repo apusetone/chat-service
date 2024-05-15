@@ -1,6 +1,7 @@
 import json
 import logging
 import threading
+from contextlib import asynccontextmanager
 
 import redis
 import redis.asyncio as aredis
@@ -35,69 +36,69 @@ class RedisCache:
             self.cache_type = cache_type
             self.expiry = expiry
 
-    async def get(self, key: str) -> dict | None:
+    @asynccontextmanager
+    async def _get_redis_connection(self):
+        cache = aredis.from_url(
+            f"{self.uri}/{self.cache_type}", encoding="utf-8", decode_responses=True
+        )
         try:
-            cache = aredis.from_url(
-                f"{self.uri}/{self.cache_type}", encoding="utf-8", decode_responses=True
-            )
-            json_str = await cache.get(key)
-            if json_str:
-                return yaml.load(json_str, Loader=yaml.SafeLoader)
-            return None
-        except redis.exceptions.RedisError:
-            return None
+            yield cache
+        finally:
+            await cache.aclose()
+
+    async def get(self, key: str) -> dict | None:
+        async with self._get_redis_connection() as cache:
+            try:
+                json_str = await cache.get(key)
+                if json_str:
+                    return yaml.load(json_str, Loader=yaml.SafeLoader)
+                return None
+            except redis.exceptions.RedisError:
+                return None
 
     async def scan_with_suffix(self, suffix: str) -> dict | None:
-        try:
-            cache = aredis.from_url(
-                f"{self.uri}/{self.cache_type}", encoding="utf-8", decode_responses=True
-            )
-            cursor = "0"
-            while cursor != 0:
-                cursor, scan_keys = await cache.scan(cursor=cursor, match=f"*{suffix}")
-                if scan_keys:
-                    json_str = await cache.get(scan_keys[0])
-                    if json_str:
-                        return yaml.safe_load(json_str)
-            return None
-        except redis.exceptions.RedisError:
-            return None
+        async with self._get_redis_connection() as cache:
+            try:
+                cursor = "0"
+                while cursor != 0:
+                    cursor, scan_keys = await cache.scan(cursor=cursor, match=f"*{suffix}")
+                    if scan_keys:
+                        json_str = await cache.get(scan_keys[0])
+                        if json_str:
+                            return yaml.safe_load(json_str)
+                return None
+            except redis.exceptions.RedisError:
+                return None
 
     async def set(self, key: str, value: object, expiry=None) -> bool:
-        try:
-            cache = aredis.from_url(
-                f"{self.uri}/{self.cache_type}", encoding="utf-8", decode_responses=True
-            )
-            json_str = json.dumps(value, ensure_ascii=False)
-            result = await cache.set(
-                key, json_str, ex=expiry if expiry else self.expiry
-            )
-            return bool(result)
-        except redis.exceptions.RedisError:
-            logger.warning("RedisCache failed to set.", exc_info=True)
-            return False
+        async with self._get_redis_connection() as cache:
+            try:
+                json_str = json.dumps(value, ensure_ascii=False)
+                result = await cache.set(
+                    key, json_str, ex=expiry if expiry else self.expiry
+                )
+                return bool(result)
+            except redis.exceptions.RedisError:
+                logger.warning("RedisCache failed to set.", exc_info=True)
+                return False
 
     async def delete(self, key: str) -> bool:
-        try:
-            cache = aredis.from_url(
-                f"{self.uri}/{self.cache_type}", encoding="utf-8", decode_responses=True
-            )
-            result = await cache.delete(key)
-            return bool(result)
-        except redis.exceptions.RedisError:
-            return False
+        async with self._get_redis_connection() as cache:
+            try:
+                result = await cache.delete(key)
+                return bool(result)
+            except redis.exceptions.RedisError:
+                return False
 
     async def delete_with_prefix(self, prefix: str) -> int | None:
-        try:
-            cache = aredis.from_url(
-                f"{self.uri}/{self.cache_type}", encoding="utf-8", decode_responses=True
-            )
-            cursor = "0"
-            deleted_count = 0
-            while cursor != 0:
-                cursor, scan_keys = await cache.scan(cursor=cursor, match=f"{prefix}*")
-                for key in scan_keys:
-                    deleted_count += await cache.delete(key)
-            return deleted_count
-        except redis.exceptions.RedisError:
-            return None
+        async with self._get_redis_connection() as cache:
+            try:
+                cursor = "0"
+                deleted_count = 0
+                while cursor != 0:
+                    cursor, scan_keys = await cache.scan(cursor=cursor, match=f"{prefix}*")
+                    for key in scan_keys:
+                        deleted_count += await cache.delete(key)
+                return deleted_count
+            except redis.exceptions.RedisError:
+                return None

@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
 from fastapi import Depends, FastAPI, Request, WebSocket
@@ -19,7 +20,29 @@ from app.ws.messages.views import WebsocketEndpointView
 
 logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title="chat-service")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # FastAPILimiter用のRedis接続
+    redis_throttling_connection = redis.from_url(
+        f"{settings.REDIS_URI}/{CacheType.THROTTLING}",
+        encoding="utf-8",
+        decode_responses=True,
+    )
+    await FastAPILimiter.init(redis_throttling_connection)
+
+    # FastAPICache用の別のRedis接続
+    redis_cache_connection = redis.from_url(
+        f"{settings.REDIS_URI}/{CacheType.CACHE}",
+    )
+    FastAPICache.init(RedisBackend(redis_cache_connection), prefix="fastapi-cache")
+
+    try:
+        yield
+    finally:
+        pass
+
+app = FastAPI(title="chat-service", lifespan=lifespan)
 app.add_middleware(TimeoutMiddleware, timeout=settings.REQUEST_TIMEOUT)
 app.include_router(api_router, prefix="/api")
 app.router.route_class = LoggingContextRoute
@@ -71,22 +94,6 @@ async def all_exception_handler(request: Request, exc: Exception):
         },
     )
 
-
-@app.on_event("startup")
-async def startup():
-    # FastAPILimiter用のRedis接続
-    redis_throttling_connection = redis.from_url(
-        f"{settings.REDIS_URI}/{CacheType.THROTTLING}",
-        encoding="utf-8",
-        decode_responses=True,
-    )
-    await FastAPILimiter.init(redis_throttling_connection)
-
-    # FastAPICache用の別のRedis接続
-    redis_cache_connection = redis.from_url(
-        f"{settings.REDIS_URI}/{CacheType.CACHE}",
-    )
-    FastAPICache.init(RedisBackend(redis_cache_connection), prefix="fastapi-cache")
 
 
 # TODO: viewsに配置したかった

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.models import MessageSchema
 
@@ -10,7 +10,7 @@ class CreateMessageRequest(BaseModel):
 
 
 class CreateMessageResponse(MessageSchema):
-    @validator("created_at", pre=True, always=True)
+    @field_validator("created_at", mode="before")
     def convert_created_at(cls, v):
         if isinstance(v, datetime):
             return v.isoformat()

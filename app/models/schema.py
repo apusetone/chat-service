@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.commons.types import ChatType, NotificationType, PlatformType
 
@@ -57,7 +57,7 @@ class UserSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    @validator("notification_type", pre=True, always=True)
+    @field_validator("notification_type", mode="before")
     def convert_notification_type(cls, v):
         if isinstance(v, int):
             return NotificationType(v).name.lower()
@@ -109,7 +109,7 @@ class SessionSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    @validator("platform_type", pre=True, always=True)
+    @field_validator("platform_type", mode="before")
     def convert_platform_type(cls, v):
         if isinstance(v, int):
             return PlatformType(v).name.lower()
@@ -129,7 +129,7 @@ class ChatSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    @validator("chat_type", pre=True, always=True)
+    @field_validator("chat_type", mode="before")
     def convert_chat_type(cls, v):
         if isinstance(v, int):
             return ChatType(v).name.lower()
