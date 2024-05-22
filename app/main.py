@@ -2,12 +2,14 @@ import logging
 from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
+from asyncpg.exceptions import PostgresError
 from fastapi import Depends, FastAPI, Request, WebSocket
 from fastapi.exceptions import FastAPIError, RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_limiter import FastAPILimiter
+from pydantic_core._pydantic_core import ValidationError
 
 from app.api.main import router as api_router
 from app.commons.authentication import websocket_headers
@@ -61,6 +63,39 @@ async def bad_request_validation_exception_handler(
         content={
             "error_code": "BAD_REQUEST",
             "message": "Request parameters validation failed",
+            "detail": [],
+        },
+    )
+
+
+# Handler for pydantic_core validation errors
+@app.exception_handler(ValidationError)
+async def pydantic_core_validation_exception_handler(
+    request: Request, exc: ValidationError
+):
+    # Log the validation error with traceback
+    logging.error("A validation error occurred", exc_info=exc)
+    # Return the error response
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error_code": "BAD_REQUEST",
+            "message": "Request parameters validation failed",
+            "detail": [],
+        },
+    )
+
+
+# Handler for PostgresError
+@app.exception_handler(PostgresError)
+async def asyncpg_exception_handler(request: Request, exc: PostgresError):
+    # Log the PostgresError error with traceback
+    logging.error("An internal server error occurred (Postgres error)", exc_info=exc)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error_code": "INTERNAL_SERVER_ERROR",
+            "message": "An internal server error occurred.",
             "detail": [],
         },
     )

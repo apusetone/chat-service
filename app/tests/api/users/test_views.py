@@ -118,6 +118,35 @@ async def test_users_read(
 
 
 @pytest.mark.anyio
+async def test_users_read_failure(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Read failure"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value=None,
+    )
+
+    # execute
+    response = await ac.get(
+        "/api/users",
+        headers={"Authorization": "Bearer invalid_or_expired_token"},
+    )
+
+    # verify
+    assert 401 == response.status_code
+    expected = {
+        "detail": ["Invalid authentication credentials"],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
 async def test_users_update(
     ac: AsyncClient, session: AsyncSession, mocker: MockFixture
 ) -> None:
@@ -150,6 +179,507 @@ async def test_users_update(
 
 
 @pytest.mark.anyio
+async def test_users_update_failure(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update failure due to invalid token"""
+
+    # setup
+    await setup_data(session)
+
+    # execute
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer invalid_or_expired_token"},
+        json={
+            "is_name_visible": False,
+            "username": "testuser12345",
+            "first_name": "John",
+            "last_name": "Smith",
+            "new_email": None,
+            "notification_type": "mobile_push",
+        },
+    )
+
+    # verify
+    assert 401 == response.status_code
+    expected = {
+        "detail": ["Invalid authentication credentials"],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_first_name_anonymous(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update with first_name as 'ANONYMOUS'"""
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": False,
+            "username": "testuser12345",
+            "first_name": "ANONYMOUS",  # first_nameが"ANONYMOUS"
+            "last_name": "Smith",
+            "new_email": None,
+            "notification_type": "mobile_push",
+        },
+    )
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_last_name_anonymous(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update with last_name as 'ANONYMOUS'"""
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": False,
+            "username": "testuser12345",
+            "first_name": "John",
+            "last_name": "ANONYMOUS",  # last_nameが"ANONYMOUS"
+            "new_email": None,
+            "notification_type": "mobile_push",
+        },
+    )
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_invalid_request_format(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update failure due to invalid request format"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": "not_a_boolean",
+            "username": 123,  # should be a string
+            "first_name": "John",
+            "last_name": "Smith",
+            "new_email": None,
+            "notification_type": "mobile_push",
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_username_too_long(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update failure due to username being too long"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    long_username = "a" * 256  # Assuming the max length allowed is less than 256
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": True,
+            "username": long_username,
+            "first_name": "John",
+            "last_name": "Smith",
+            "new_email": None,
+            "notification_type": "mobile_push",
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_first_name_too_long(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update failure due to first name being too long"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    long_first_name = "a" * 256  # Assuming the max length allowed is less than 256
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": True,
+            "username": "valid_username",
+            "first_name": long_first_name,
+            "last_name": "Smith",
+            "new_email": None,
+            "notification_type": "mobile_push",
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_first_name_wrong_type(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update failure due to first name being an array"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": True,
+            "username": "valid_username",
+            "first_name": ["John"],  # should be a string
+            "last_name": "Smith",
+            "new_email": None,
+            "notification_type": "mobile_push",
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_last_name_too_long(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update failure due to last name being too long"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    long_last_name = "a" * 256  # Assuming the max length allowed is less than 256
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": True,
+            "username": "valid_username",
+            "first_name": "John",
+            "last_name": long_last_name,
+            "new_email": None,
+            "notification_type": "mobile_push",
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_last_name_wrong_type(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update failure due to last name being a boolean"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": True,
+            "username": "valid_username",
+            "first_name": "John",
+            "last_name": True,  # should be a string
+            "new_email": None,
+            "notification_type": "mobile_push",
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_new_email_wrong_type(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update failure due to new email being an integer"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": True,
+            "username": "valid_username",
+            "first_name": "John",
+            "last_name": "Smith",
+            "new_email": 123,  # should be a string or None
+            "notification_type": "mobile_push",
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_notification_type_too_long(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update failure due to notification type being too long"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    long_notification_type = (
+        "a" * 256
+    )  # Assuming the max length allowed is less than 256
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": True,
+            "username": "valid_username",
+            "first_name": "John",
+            "last_name": "Smith",
+            "new_email": None,
+            "notification_type": long_notification_type,
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_notification_type_wrong_type(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update failure due to notification type being an integer"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": True,
+            "username": "valid_username",
+            "first_name": "John",
+            "last_name": "Smith",
+            "new_email": None,
+            "notification_type": 123,  # should be a string
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_update_is_name_visible_wrong_type(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Update failure due to is_name_visible being a string"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.put(
+        "/api/users",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "is_name_visible": "OK",  # should be a boolean
+            "username": "valid_username",
+            "first_name": "John",
+            "last_name": "Smith",
+            "new_email": None,
+            "notification_type": "mobile_push",
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
 async def test_users_partial_update(
     ac: AsyncClient, session: AsyncSession, mocker: MockFixture
 ) -> None:
@@ -177,3 +707,175 @@ async def test_users_partial_update(
     )
 
     assert 204 == response.status_code
+
+
+@pytest.mark.anyio
+async def test_users_partial_update_invalid_code(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """PartialUpdate with invalid code"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+    mocker.patch.object(
+        RedisCache,
+        "get",
+        return_value={"code": "123456"},
+    )
+
+    # execute
+    response = await ac.patch(
+        "/api/users/verify_email",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={"code": "wrong_code"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_partial_update_expired_token(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """PartialUpdate with expired or invalid token"""
+
+    # setup
+    await setup_data(session)
+
+    # execute
+    response = await ac.patch(
+        "/api/users/verify_email",
+        headers={"Authorization": "Bearer expired_or_invalid_token"},
+        json={"code": "123456"},
+    )
+
+    # verify
+    assert 401 == response.status_code
+    expected = {
+        "detail": ["Invalid authentication credentials"],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_partial_update_code_wrong_type(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """PartialUpdate failure due to code being an integer"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+    mocker.patch.object(
+        RedisCache,
+        "get",
+        return_value={"code": "123456"},
+    )
+
+    # execute
+    response = await ac.patch(
+        "/api/users/verify_email",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={"code": 123},  # should be a string
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_partial_update_code_too_short(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """PartialUpdate failure due to code being too short"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+    mocker.patch.object(
+        RedisCache,
+        "get",
+        return_value={"code": "123456"},
+    )
+
+    # execute
+    response = await ac.patch(
+        "/api/users/verify_email",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={"code": "12"},  # too short
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_users_partial_update_code_too_long(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """PartialUpdate failure due to code being too long"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+    mocker.patch.object(
+        RedisCache,
+        "get",
+        return_value={"code": "123456"},
+    )
+
+    # execute
+    response = await ac.patch(
+        "/api/users/verify_email",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={"code": "1234567"},  # too long
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()

@@ -59,14 +59,14 @@ class ReadAllChatParticipant:
                 ).scalar()
             ):
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
+                    status_code=status.HTTP_403_FORBIDDEN, detail=["Forbidden"]
                 )
 
             # Chatを取得
             chat = await Chat.read_by_id(session, chat_id)
             if not chat:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found."
+                    status_code=status.HTTP_404_NOT_FOUND, detail=["Chat not found."]
                 )
 
             # ChatParticipants.read_allを利用してチャット参加者を取得
@@ -98,7 +98,9 @@ class CreateChat:
             if not user.username or user.username in request.participant_names:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Creator cannot be included as a chat participant or you have no username.",
+                    detail=[
+                        "Creator cannot be included as a chat participant or you have no username."
+                    ],
                 )
 
             # チャットを作成
@@ -124,7 +126,7 @@ class CreateChat:
                     await session.rollback()
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="No valid participants.",
+                        detail=["One or more participant names do not exist"],
                     )
 
                 # チャット参加者を作成

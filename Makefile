@@ -27,4 +27,5 @@ schemaspy:
 	-host postgresql -port 5432 -db chat_service \
 	-s public -u postgres -p postgres \
 	-connprops useSSL\\=false \
+	-imageformat svg \
 	-all -noads

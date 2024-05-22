@@ -149,7 +149,7 @@ async def test_messages_read_all(
 
     # execute
     response = await ac.get(
-        f"/api/messages/chat/{chat_id}?offset=0&limit=10&desc=true",
+        f"/api/messages/chat/{chat_id}?offset=0&limit=10",
         headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
     )
 
@@ -168,12 +168,335 @@ async def test_messages_read_all(
             }
         )
 
-    # 最終的なexpected辞書を作成
+    assert 200 == response.status_code
     expected = {"messages": messages}
-
     response_data = response.json()
-
     assert expected == response_data
+
+
+@pytest.mark.anyio
+async def test_messages_read_all_unauthorized(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll messages with unauthorized access"""
+
+    # setup
+    await setup_data(session)
+
+    # Chat.read_allを使用して最初のチャットを取得
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
+    # execute
+    response = await ac.get(
+        f"/api/messages/chat/{chat_id}?offset=0&limit=10",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 401 == response.status_code
+    expected = {
+        "detail": ["Invalid authentication credentials"],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_messages_read_all_nonexistent_chat(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll messages with nonexistent chat ID"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # Chat.read_allを使用して最初のチャットを取得
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
+    # execute
+    response = await ac.get(
+        "/api/messages/chat/9999?offset=0&limit=10",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # Message.read_allを使用して最初のメッセージを取得
+    messages = []
+
+    # Message.read_allを使用してメッセージを取得し、messagesリストに追加
+    async for message in Message.read_all(session, chat_id=chat_id, offset=0, limit=10):
+        messages.append(
+            {
+                "id": message.id,
+                "sender_id": message.sender_id,
+                "content": message.content,
+                "created_at": message.created_at.isoformat(),
+                "read_by_list": message.read_by_list,
+            }
+        )
+
+    # verify
+    assert 403 == response.status_code
+    expected = {"detail": ["Forbidden"]}
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_messages_read_all_with_high_offset(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll messages with high offset resulting in no messages"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
+    # execute
+    response = await ac.get(
+        f"/api/messages/chat/{chat_id}?offset=1000&limit=10&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_messages_read_all_with_negative_offset(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll messages with negative offset value"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
+    # execute
+    response = await ac.get(
+        f"/api/messages/chat/{chat_id}?offset=-1&limit=10&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_messages_read_all_with_high_limit(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll messages with high limit exceeding total messages"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
+    # execute
+    response = await ac.get(
+        f"/api/messages/chat/{chat_id}?offset=0&limit=1000&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_messages_read_all_with_negative_limit(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll messages with negative limit value"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
+    # execute
+    response = await ac.get(
+        f"/api/messages/chat/{chat_id}?offset=0&limit=-10&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_messages_read_all_with_non_integer_offset(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll messages with non-integer offset value"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
+    # execute
+    response = await ac.get(
+        f"/api/messages/chat/{chat_id}?offset=abc&limit=10&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_messages_read_all_with_non_integer_limit(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll messages with non-integer limit value"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
+    # execute
+    response = await ac.get(
+        f"/api/messages/chat/{chat_id}?offset=0&limit=abc&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
 
 
 @pytest.mark.anyio
@@ -223,6 +546,152 @@ async def test_messages_create(
         "content": "Posted Message 1",
         "created_at": first_message.created_at.isoformat(),
         "read_by_list": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_messages_create_unauthorized(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Create with expired or invalid token"""
+
+    # setup
+    await setup_data(session)
+
+    # Chat.read_allを使用して最初のチャットを取得
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
+    # execute
+    response = await ac.post(
+        f"/api/messages/chat/{chat_id}",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={"content": "Posted Message 1"},
+    )
+
+    # verify
+    assert 401 == response.status_code
+    expected = {
+        "detail": ["Invalid authentication credentials"],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_messages_create_nonexistent_chat(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Create with nonexistent chat ID"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.post(
+        f"/api/messages/chat/{999999999}",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={"content": "Posted Message 1"},
+    )
+
+    # verify
+    assert 403 == response.status_code
+    expected = {"detail": ["Forbidden"]}
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_messages_create_with_empty_content(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Create message with empty content"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
+    # execute
+    response = await ac.post(
+        f"/api/messages/chat/{chat_id}",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={"content": ""},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_messages_create_with_too_long_content(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Create message with content that is too long"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    chat_id = first_chat.id
+
+    long_content = "A" * 5001  # assuming the max length is 5000 characters
+
+    # execute
+    response = await ac.post(
+        f"/api/messages/chat/{chat_id}",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={"content": long_content},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
     }
     assert expected == response.json()
 

@@ -65,7 +65,7 @@ class TwoFa:
         if two_fa_dict is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid code",
+                detail=["Invalid code"],
             )
 
         two_fa_dict.update({"token": token})
@@ -73,7 +73,7 @@ class TwoFa:
         if two_fa.code != code:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid code",
+                detail=["Invalid code"],
             )
 
         async with self.async_session.begin() as session:
@@ -90,7 +90,7 @@ class TwoFa:
                 except IntegrityError:
                     raise HTTPException(
                         status_code=status.HTTP_409_CONFLICT,
-                        detail="Email already exists.",
+                        detail=["Email already exists."],
                     )
 
             user_id = user.id
@@ -133,8 +133,8 @@ class Refresh:
             )
             if not session_instance:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Session not found or expired",
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=["Session not found or expired"],
                 )
 
             user_id = session_instance.user_id

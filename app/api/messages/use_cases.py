@@ -47,7 +47,7 @@ class ReadAllMessage:
                 ).scalar()
             ):
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
+                    status_code=status.HTTP_403_FORBIDDEN, detail=["Forbidden"]
                 )
 
             stmt = (
@@ -111,14 +111,14 @@ class CreateMessage:
                 ).scalar()
             ):
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
+                    status_code=status.HTTP_403_FORBIDDEN, detail=["Forbidden"]
                 )
 
             # Chatを取得
             chat = await Chat.read_by_id(a_session, chat_id)
             if not chat:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found."
+                    status_code=status.HTTP_404_NOT_FOUND, detail=["Chat not found."]
                 )
 
         async with self.async_session.begin() as a_session:

@@ -91,6 +91,74 @@ async def test_auth_login(
 
 
 @pytest.mark.anyio
+async def test_auth_login_invalid_email(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Login with invalid email"""
+
+    # setup
+    await setup_data(session)
+
+    # execute
+    response = await ac.post("/api/auth/login", json={"email": "invalid_email"})
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_auth_login_empty_body(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Login with empty request body"""
+
+    # setup
+    await setup_data(session)
+
+    # execute
+    response = await ac.post("/api/auth/login", json={})
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_auth_login_email_too_long(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Login with too long email"""
+
+    # setup
+    await setup_data(session)
+
+    # execute
+    response = await ac.post(
+        "/api/auth/login", json={"email": "a" * 256 + "@example.com"}
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
 async def test_auth_two_fa(
     ac: AsyncClient, session: AsyncSession, mocker: MockFixture
 ) -> None:
@@ -125,6 +193,88 @@ async def test_auth_two_fa(
 
 
 @pytest.mark.anyio
+async def test_auth_two_fa_wrong_code(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """TwoFa with wrong code"""
+
+    # setup
+    await setup_data(session)
+
+    # add to redis
+    response = await ac.post("/api/auth/login", json={"email": "user1@example.com"})
+
+    # execute
+    response = await ac.post(
+        "/api/auth/2fa",
+        json={"code": "wrong_code", "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_auth_two_fa_invalid_token(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """TwoFa with invalid token"""
+
+    # setup
+    await setup_data(session)
+
+    # add to redis
+    response = await ac.post("/api/auth/login", json={"email": "user1@example.com"})
+
+    # execute
+    response = await ac.post(
+        "/api/auth/2fa",
+        json={"code": "000000", "token": "invalid_token"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_auth_two_fa_correct_format_wrong_code(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """TwoFa with correct format but wrong code"""
+
+    # setup
+    await setup_data(session)
+
+    # add to redis
+    response = await ac.post("/api/auth/login", json={"email": "user1@example.com"})
+
+    # execute
+    response = await ac.post(
+        "/api/auth/2fa",
+        json={"code": "123456", "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+    )
+
+    # verify
+    assert 401 == response.status_code
+    expected = {
+        "detail": ["Invalid code"],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
 async def test_auth_refresh(
     ac: AsyncClient, session: AsyncSession, mocker: MockFixture
 ) -> None:
@@ -149,6 +299,35 @@ async def test_auth_refresh(
         "access_token": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "token_type": "refresh_token",
         "id": 1,
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_auth_refresh_token_invalid_or_expired(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Refresh with invalid or expired token"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch(
+        "app.commons.utils.secrets.choice",
+        return_value="b",
+    )
+    mocker.patch("app.commons.utils.random.randint", return_value=0)
+
+    # execute
+    response = await ac.post(
+        "/api/auth/refresh",
+        headers={"Authorization": "Bearer invalid_or_expired_token"},
+    )
+
+    # verify
+    assert 401 == response.status_code
+    expected = {
+        "detail": ["Session not found or expired"],
     }
     assert expected == response.json()
 

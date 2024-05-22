@@ -159,6 +159,246 @@ async def test_chats_read_all(
 
 
 @pytest.mark.anyio
+async def test_chats_read_all_invalid_token(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll failure due to invalid token"""
+
+    # setup
+    await setup_data(session)
+
+    # execute
+    response = await ac.get(
+        "/api/chats?offset=0&limit=10&desc=true",
+        headers={"Authorization": "Bearer invalid_or_expired_token"},
+    )
+
+    # verify
+    assert 401 == response.status_code
+    expected = {
+        "detail": ["Invalid authentication credentials"],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_read_all_offset_wrong_type(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll failure due to offset being a string instead of an integer"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.get(
+        "/api/chats?offset=invalid&limit=10&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_read_all_offset_negative(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll failure due to offset being a negative integer"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.get(
+        "/api/chats?offset=-1&limit=10&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_read_all_limit_wrong_type(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll failure due to limit being a string instead of an integer"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.get(
+        "/api/chats?offset=0&limit=invalid&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_read_all_limit_negative(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll failure due to limit being a negative integer"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.get(
+        "/api/chats?offset=0&limit=-1&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_read_all_desc_wrong_value(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll failure due to desc being a string other than 'true' or 'false'"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.get(
+        "/api/chats?offset=0&limit=10&desc=invalid",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_read_all_offset_exceeds_max(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll failure due to offset exceeding the maximum value"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.get(
+        "/api/chats?offset=51&limit=10&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_read_all_limit_exceeds_max(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAll failure due to limit exceeding the maximum value"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.get(
+        "/api/chats?offset=0&limit=11&desc=true",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
 async def test_chats_create(
     ac: AsyncClient, session: AsyncSession, mocker: MockFixture
 ) -> None:
@@ -198,6 +438,246 @@ async def test_chats_create(
         "updated_at": first_chat.updated_at.isoformat(),
         "chat_type": "group",
         "name": "New room",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_create_with_invalid_token(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Create chat with invalid token"""
+
+    # setup
+    await setup_data(session)
+
+    # Attempt to create a chat with invalid authorization token
+    response = await ac.post(
+        "/api/chats",
+        headers={"Authorization": "Bearer invalid_token"},
+        json={
+            "name": "New room",
+            "participant_names": ["user2", "user3"],
+        },
+    )
+
+    # Assert that the response status code is 401 Unauthorized
+    assert 401 == response.status_code, "Expected 401 Unauthorized response."
+    expected = {
+        "detail": ["Invalid authentication credentials"],
+    }
+    assert (
+        expected == response.json()
+    ), "Expected error detail message for invalid token."
+
+
+@pytest.mark.anyio
+async def test_chats_create_with_empty_body(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Create chat with empty body"""
+
+    # setup
+    await setup_data(session)
+
+    # Mock the RedisCache to simulate nonexistent users
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.post(
+        "/api/chats",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={},
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_create_with_too_long_name(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Create chat with name that is too long"""
+
+    # setup
+    await setup_data(session)
+
+    # Mock the RedisCache to simulate nonexistent users
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.post(
+        "/api/chats",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "name": "A" * 101,  # assuming max length is 100
+            "participant_names": ["user2", "user3"],
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_create_with_too_long_participant_names(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Create chat with participant names that are too long"""
+
+    # setup
+    await setup_data(session)
+
+    # Mock the RedisCache to simulate nonexistent users
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.post(
+        "/api/chats",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "name": "New room",
+            "participant_names": ["A" * 51, "user3"],  # assuming max length is 50
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_create_with_empty_string_in_participant_names(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Create chat with empty string in participant names"""
+
+    # setup
+    await setup_data(session)
+
+    # Mock the RedisCache to simulate nonexistent users
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.post(
+        "/api/chats",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "name": "New room",
+            "participant_names": ["user2", ""],
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": [],
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_create_with_empty_list_of_participant_names(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Create chat with empty list of participant names"""
+
+    # setup
+    await setup_data(session)
+
+    # Mock the RedisCache to simulate nonexistent users
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.post(
+        "/api/chats",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "name": "New room",
+            "participant_names": [],
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "error_code": "BAD_REQUEST",
+        "message": "Request parameters validation failed",
+        "detail": [],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_create_with_nonexistent_participant_names(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Create chat with nonexistent participant names"""
+
+    # setup
+    await setup_data(session)
+
+    # Mock the RedisCache to simulate nonexistent users
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.post(
+        "/api/chats",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+        json={
+            "name": "New room",
+            "participant_names": ["nonexistent_user"],
+        },
+    )
+
+    # verify
+    assert 400 == response.status_code
+    expected = {
+        "detail": ["One or more participant names do not exist"],
     }
     assert expected == response.json()
 
@@ -263,6 +743,66 @@ async def test_chats_read_all_participants(
 
 
 @pytest.mark.anyio
+async def test_chats_read_all_participants_unauthorized(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAllParticipants with unauthorized access"""
+
+    # setup
+    await setup_data(session)
+
+    # Chat.read_allを使用して最初のチャットを取得
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    # execute
+    response = await ac.get(
+        f"/api/chats/{first_chat.id}/participants",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 401 == response.status_code
+    expected = {
+        "detail": ["Invalid authentication credentials"],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
+async def test_chats_read_all_participants_nonexistent_chat(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """ReadAllParticipants with nonexistent chat ID"""
+
+    # setup
+    await setup_data(session)
+
+    mocker.patch.object(
+        RedisCache,
+        "scan_with_suffix",
+        return_value={"user_id": 1},
+    )
+
+    # execute
+    response = await ac.get(
+        f"/api/chats/{9999999}/participants",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 403 == response.status_code
+    expected = {
+        "detail": ["Forbidden"],
+    }
+    assert expected == response.json()
+
+
+@pytest.mark.anyio
 async def test_chats_delete(
     ac: AsyncClient, session: AsyncSession, mocker: MockFixture
 ) -> None:
@@ -292,3 +832,34 @@ async def test_chats_delete(
     )
 
     assert 204 == response.status_code
+
+
+@pytest.mark.anyio
+async def test_chats_delete_unauthorized(
+    ac: AsyncClient, session: AsyncSession, mocker: MockFixture
+) -> None:
+    """Delete with unauthorized access"""
+
+    # setup
+    await setup_data(session)
+
+    # Chat.read_allを使用して最初のチャットを取得
+    first_chat = None
+    async for chat in Chat.read_all(session, user_id=1, offset=0, limit=1, desc=True):
+        first_chat = chat
+        break
+
+    assert first_chat is not None, "No chat was found."
+
+    # execute
+    response = await ac.delete(
+        f"/api/chats/{first_chat.id}",
+        headers={"Authorization": "Bearer zT4ypB0BuzQRDJKkvPh1U2wQFStaH8tv"},
+    )
+
+    # verify
+    assert 401 == response.status_code
+    expected = {
+        "detail": ["Invalid authentication credentials"],
+    }
+    assert expected == response.json()

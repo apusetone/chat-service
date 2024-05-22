@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class ReadUserResponse(BaseModel):
@@ -24,6 +24,18 @@ class UpdateUserRequest(BaseModel):
     last_name: str | None = Field(..., max_length=30)
     new_email: EmailStr | None
     notification_type: Literal["disabled", "mobile_push", "email"]
+
+    @field_validator("first_name", mode="before")
+    def check_first_name(cls, v):
+        if v == "ANONYMOUS":
+            raise ValueError("First name cannot be 'ANONYMOUS'")
+        return v
+
+    @field_validator("last_name", mode="before")
+    def check_last_name(cls, v):
+        if v == "ANONYMOUS":
+            raise ValueError("Last name cannot be 'ANONYMOUS'")
+        return v
 
 
 class PartialUpdateUserRequest(BaseModel):

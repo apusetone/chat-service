@@ -1,11 +1,11 @@
-from pydantic import BaseModel, conint
+from pydantic import BaseModel, Field, conint, constr, field_validator
 
 from app.models import ChatSchema, MaskedUserSchema
 
 
 class ReadAllChatRequest(BaseModel):
-    offset: int = conint(ge=0, le=50)
-    limit: int = conint(ge=0, le=10)
+    offset: conint(ge=0, le=50)
+    limit: conint(ge=0, le=10)
     desc: bool
 
 
@@ -26,8 +26,15 @@ class ReadAllChatParticipantResponse(BaseModel):
 
 
 class CreateChatRequest(BaseModel):
-    name: str
-    participant_names: list[str]
+    name: constr(min_length=1, max_length=50) = Field(...)
+    participant_names: list[constr(min_length=1, max_length=20)] = Field(...)
+
+    @field_validator("participant_names", mode="before")
+    def check_participant_names(cls, v):
+        # TODO: set upper limit
+        if not len(v):
+            raise ValueError("Participant names list cannot be empty")
+        return v
 
 
 class CreateChatResponse(ChatSchema):

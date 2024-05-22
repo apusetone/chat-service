@@ -20,7 +20,7 @@ from app.settings import settings
 
 UNAUTHORIZED = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Invalid authentication credentials",
+    detail=["Invalid authentication credentials"],
     headers={"WWW-Authenticate": "Bearer"},
 )
 
@@ -108,7 +108,7 @@ class SignatureV4Authentication:
             # 署名に関する例外が発生した場合のエラーハンドリング
             raise HTTPException(
                 status_code=401,
-                detail="Invalid signature or credentials",
+                detail=["Invalid signature or credentials"],
                 headers={"WWW-Authenticate": "Signature"},
             )
 
@@ -120,7 +120,7 @@ class SignatureV4Authentication:
             # 署名が一致しない場合はエラーを返す
             raise HTTPException(
                 status_code=401,
-                detail="Signature does not match",
+                detail=["Signature does not match"],
                 headers={"WWW-Authenticate": "Signature"},
             )
 

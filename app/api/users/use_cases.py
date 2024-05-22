@@ -92,7 +92,7 @@ class PartialUpdateUser:
         if two_fa_dict is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Invalid code",
+                detail=["Invalid code"],
             )
 
         two_fa_dict.update({"token": schema.access_token})
@@ -100,7 +100,7 @@ class PartialUpdateUser:
         if two_fa.code != request.code:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid code",
+                detail=["Invalid code"],
             )
 
         async with self.async_session.begin() as session:
