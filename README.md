@@ -56,7 +56,7 @@ Connected (press CTRL+C to quit)
 
   - viewsのテスト
 
-    - 異常系
+    - [x] 異常系
 
     - [x] Warning箇所の修正
 

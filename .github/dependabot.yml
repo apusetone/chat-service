@@ -1,24 +1,6 @@
 version: 2
 updates:
   - package-ecosystem: pip
-    directory: '/app/'
-    schedule:
-      interval: weekly
-      day: monday
-      time: '09:00'
-      timezone: "Asia/Tokyo"
-    target-branch: "dependabot/target"
-    open-pull-requests-limit: 10
-    reviewers:
-      - apusetone
-    assignees:
-      - apusetone
-    commit-message:
-      prefix: fix
-      prefix-development: chore
-      include: scope
-
-  - package-ecosystem: github-actions
     directory: '/'
     schedule:
       interval: weekly
@@ -35,4 +17,3 @@ updates:
       prefix: fix
       prefix-development: chore
       include: scope
-      

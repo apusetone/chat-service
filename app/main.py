@@ -57,7 +57,7 @@ async def bad_request_validation_exception_handler(
     request: Request, exc: RequestValidationError
 ):
     # Log the validation errors with traceback
-    logging.error("Validation error", exc_info=exc)
+    logging.warning("Validation error", exc_info=exc)
     return JSONResponse(
         status_code=400,
         content={
@@ -74,8 +74,7 @@ async def pydantic_core_validation_exception_handler(
     request: Request, exc: ValidationError
 ):
     # Log the validation error with traceback
-    logging.error("A validation error occurred", exc_info=exc)
-    # Return the error response
+    logging.warning("A validation error occurred", exc_info=exc)
     return JSONResponse(
         status_code=400,
         content={
