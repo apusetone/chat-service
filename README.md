@@ -52,7 +52,7 @@ Connected (press CTRL+C to quit)
 
   - websocketのテスト全般
 
-  - modelsのテスト全般
+  - [x] modelsのテスト全般
 
   - viewsのテスト
 
