@@ -3,6 +3,7 @@ from typing import AsyncGenerator, Generator
 from unittest import mock
 
 import pytest
+from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -40,6 +41,14 @@ async def ac() -> AsyncGenerator:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="https://test"
     ) as c:
+        yield c
+
+
+@pytest.fixture(scope="module")
+def client():
+    from app.main import app
+
+    with TestClient(app) as c:
         yield c
 
 
