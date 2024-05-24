@@ -130,10 +130,11 @@ class SignatureV4Authentication:
 async def websocket_headers(
     websocket: WebSocket,
     authorization: str | None = Header(default=None),
-) -> RefreshTokenSchema:
-    try:
+) -> AccessTokenSchema:
+
+    if authorization:
         token = authorization[len("Bearer ") :]
-    except IndexError:
+    else:
         raise WebSocketException(
             code=status.WS_1008_POLICY_VIOLATION,
             reason="Invalid authentication credentials",

@@ -22,7 +22,6 @@ class ChatRepository:
         async with self.async_session() as session:
             chat = await session.execute(select(Chat).where(Chat.id == chat_id))
             chat = chat.scalars().first()
-            logger.info(chat)
             participant = await session.execute(
                 select(ChatParticipants).where(
                     ChatParticipants.chat_id == chat_id,

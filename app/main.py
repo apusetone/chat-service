@@ -1,4 +1,3 @@
-import logging
 from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
@@ -17,8 +16,6 @@ from app.commons.types import CacheType
 from app.models.schema import AccessTokenSchema
 from app.settings import settings
 from app.ws.messages.views import WebsocketEndpointView
-
-logging.basicConfig(level=logging.INFO)
 
 
 @asynccontextmanager
