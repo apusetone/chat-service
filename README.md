@@ -8,7 +8,7 @@ It includes asynchronous DB access using asyncpg and some test code covering the
 ## Installation and quick start up
 
 ```shell
-# enable pre-commit
+# enable lefthook
 $ brew install lefthook gitleaks
 $ lefthook install
 $ cp .env.bak .env

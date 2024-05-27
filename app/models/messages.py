@@ -13,11 +13,11 @@ from .base import TimestampedEntity
 class Message(TimestampedEntity):
     __tablename__ = "messages"
 
-    id: Mapped[int] = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    chat_id: Mapped[int] = Column(ForeignKey("chats.id"), nullable=False)
-    sender_id: Mapped[int] = Column(ForeignKey("users.id"), nullable=False)
-    content: Mapped[str] = Column(String(length=1024), nullable=False)
-    read_by_list: Mapped[list[int]] = Column(ARRAY(Integer), server_default="{}")
+    id: Mapped[int] = Column(Integer, primary_key=True, index=True, autoincrement=True) # type: ignore
+    chat_id: Mapped[int] = Column(ForeignKey("chats.id"), nullable=False) # type: ignore
+    sender_id: Mapped[int] = Column(ForeignKey("users.id"), nullable=False) # type: ignore
+    content: Mapped[str] = Column(String(length=1024), nullable=False) # type: ignore
+    read_by_list: Mapped[list[int]] = Column(ARRAY(Integer), server_default="{}") # type: ignore
 
     chat = relationship("Chat", back_populates="messages")
     sender = relationship("User", back_populates="sent_messages")
@@ -75,7 +75,7 @@ class Message(TimestampedEntity):
             update(cls)
             .where(cls.id.in_(message_ids))
             .values({cls.read_by_list: cls.read_by_list.op("||")(user_id)})
-            .where(~cls.read_by_list.any(user_id))
+            .where(~cls.read_by_list.any(user_id)) # type: ignore
             .returning(cls.id)
         )
         await session.execute(stmt)

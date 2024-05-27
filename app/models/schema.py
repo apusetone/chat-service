@@ -39,20 +39,20 @@ class UserSchema(BaseModel):
     username: str | None = Field(
         None, max_length=32, description="The user's username."
     )
-    email: str = Field(..., max_length=255, description="The user's email address.")
     first_name: str | None = Field(
         None, max_length=30, description="The user's first name."
     )
     last_name: str | None = Field(
         None, max_length=30, description="The user's last name."
     )
-    notification_type: str = Field(
-        "DISABLED", description="The type of notification settings for the user."
-    )
+    email: str = Field(..., max_length=255, description="The user's email address.")
     new_email: str | None = Field(
         None,
         max_length=255,
         description="The user's new email address if they have requested to change it.",
+    )
+    notification_type: str = Field(
+        "DISABLED", description="The type of notification settings for the user."
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -137,13 +137,13 @@ class ChatSchema(BaseModel):
 
 
 class MessageSchema(BaseModel):
-    id: int = Field(None, description="The unique identifier for the message.")
-    sender_id: int = Field(None, description="The unique identifier for the sender.")
+    id: int = Field(..., description="The unique identifier for the message.")
+    sender_id: int = Field(..., description="The unique identifier for the sender.")
     content: str = Field(
         ..., max_length=1024, description="The content of the message."
     )
     created_at: datetime | str = Field(
-        None, description="The time when the message was created."
+        ..., description="The time when the message was created."
     )
     read_by_list: list[int] = Field(
         [], description="List of user IDs who have read the message."

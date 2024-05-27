@@ -16,10 +16,10 @@ from .users import User
 class Chat(TimestampedEntity):
     __tablename__ = "chats"
 
-    id: Mapped[int] = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    created_by: Mapped[int] = Column(ForeignKey("users.id"), nullable=False)
-    chat_type: Mapped[ChatType] = Column(Integer, nullable=False)
-    name: Mapped[str] = Column(String(length=255), nullable=False)
+    id: Mapped[int] = Column(Integer, primary_key=True, index=True, autoincrement=True) # type: ignore
+    created_by: Mapped[int] = Column(ForeignKey("users.id"), nullable=False) # type: ignore
+    chat_type: Mapped[ChatType] = Column(Integer, nullable=False) # type: ignore
+    name: Mapped[str] = Column(String(length=255), nullable=False) # type: ignore
 
     messages = relationship("Message", back_populates="chat", cascade="all, delete")
     participants = relationship(

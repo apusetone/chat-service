@@ -139,7 +139,7 @@ class Refresh:
             user_id = session_instance.user_id
 
             # Remove old access_tokens
-            await self.redis_cache.delete_with_prefix(user_id)
+            await self.redis_cache.delete_with_prefix(str(user_id))
 
             new_access_token = generate_random_token(32)
             await self.redis_cache.set(

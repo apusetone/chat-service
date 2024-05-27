@@ -67,7 +67,7 @@ class ReadAllMessage:
 
             # 既読にしたメッセージを返す
             for message in messages:
-                yield ReadMessageResponse.model_validate(message)
+                yield ReadMessageResponse.model_validate(message) # type: ignore
 
             if message_ids:
                 await Message.update_read_by_list(session, message_ids, user_id)
@@ -127,6 +127,10 @@ class CreateMessage:
             )
 
             posted_user = await User.read_by_id(a_session, user_id)
+            if not posted_user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail=["User not found."]
+                )
 
             # Chat参加者に通知
             async for (
@@ -135,6 +139,9 @@ class CreateMessage:
                 a_session, chat_id
             ):
                 user = participant.user
+                if not user:
+                    continue
+
                 message_payload = f"{posted_user.username}: {request.content}"
                 if user.notification_type == NotificationType.EMAIL:
                     # send email

@@ -24,10 +24,10 @@ class WebsocketEndpointView:
     def __init__(self) -> None:
         self.async_session = AsyncSessionLocal
         self.pubsub_session = PubSubSessionLocal
-        self.chat_repo = ChatRepository(self.async_session)
-        self.user_repo = UserRepository(self.async_session)
-        self.chat_participants_repo = ChatParticipantsRepository(self.async_session)
-        self.session_repo = SessionRepository(self.async_session)
+        self.chat_repo = ChatRepository(self.async_session) # type: ignore
+        self.user_repo = UserRepository(self.async_session) # type: ignore
+        self.chat_participants_repo = ChatParticipantsRepository(self.async_session) # type: ignore
+        self.session_repo = SessionRepository(self.async_session) # type: ignore
         self.aws_repo = AwsClientRepository()
         self.notification_repo = NotificationRepository()
         self.use_case = CreateMessage(self.async_session)
@@ -41,7 +41,7 @@ class WebsocketEndpointView:
         user_id = schema.user_id
 
         chat, result = await self.chat_repo.verify_chat_participant(chat_id, user_id)
-        if not result:
+        if not chat or not result:
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
 

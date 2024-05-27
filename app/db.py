@@ -22,8 +22,6 @@ AsyncSessionLocal = async_sessionmaker(
     future=True,
 )
 
-ws_clients = {}
-
 
 async def get_session() -> AsyncIterator[async_sessionmaker]:
     try:

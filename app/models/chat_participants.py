@@ -15,10 +15,10 @@ class ChatParticipants(TimestampedEntity):
 
     chat_id: Mapped[int] = Column(
         ForeignKey("chats.id", ondelete="CASCADE"), primary_key=True, nullable=False
-    )
+    ) # type: ignore
     user_id: Mapped[int] = Column(
         ForeignKey("users.id"), primary_key=True, nullable=False
-    )
+    ) # type: ignore
 
     chat = relationship("Chat", back_populates="participants")
     user = relationship("User", back_populates="chats")

@@ -4,8 +4,8 @@ from app.models import MessageSchema
 
 
 class ReadAllMessageRequest(BaseModel):
-    offset: conint(ge=0, le=50)
-    limit: conint(ge=0, le=10)
+    offset: conint(ge=0, le=50) # type: ignore
+    limit: conint(ge=0, le=10) # type: ignore
 
 
 class ReadMessageResponse(MessageSchema):

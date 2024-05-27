@@ -23,7 +23,7 @@ async def read(
     use_case: ReadUser = Depends(),
 ) -> ReadUserResponse:
     response = await use_case.execute(schema.user_id)
-    return response
+    return ReadUserResponse(**response.__dict__)
 
 
 @router.put(

@@ -18,14 +18,14 @@ secret = os.environ["SECRET"]
 class Session(TimestampedEntity):
     __tablename__ = "sessions"
 
-    id: Mapped[int] = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    user_id: Mapped[int] = Column(ForeignKey("users.id"), nullable=False)
-    device_token: Mapped[PGPString] = Column(PGPString, nullable=True)
-    platform_type: Mapped[PlatformType] = Column(Integer, nullable=True)
-    refresh_token: Mapped[PGPString] = Column(PGPString, nullable=False)
-    refresh_token_expired_at: Mapped[DateTime] = Column(
+    id: Mapped[int] = Column(Integer, primary_key=True, index=True, autoincrement=True) # type: ignore
+    user_id: Mapped[int] = Column(ForeignKey("users.id"), nullable=False) # type: ignore
+    device_token: Mapped[PGPString] = Column(PGPString, nullable=True) # type: ignore
+    platform_type: Mapped[PlatformType] = Column(Integer, nullable=True) # type: ignore
+    refresh_token: Mapped[PGPString] = Column(PGPString, nullable=False) # type: ignore
+    refresh_token_expired_at: Mapped[DateTime] = Column( 
         DateTime(timezone=True), nullable=False
-    )
+    ) # type: ignore
 
     user = relationship("User", back_populates="sessions")
 

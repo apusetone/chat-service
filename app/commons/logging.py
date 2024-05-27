@@ -33,17 +33,17 @@ class LoggingContextRoute(APIRoute):
             # TODO: need masking
             record["request_headers"] = {
                 k.decode("utf-8"): v.decode("utf-8") for (k, v) in request.headers.raw
-            }
-            record["remote_addr"] = request.client.host
+            } # type: ignore
+            record["remote_addr"] = request.client.host # type: ignore
             record["request_uri"] = request.url.path
             record["request_method"] = request.method
-            record["request_time"] = str(duration)
-            record["status"] = response.status_code
+            record["request_time"] = str(duration) # type: ignore
+            record["status"] = response.status_code # type: ignore
             # TODO: need masking
             record["response_body"] = response.body.decode("utf-8")
             record["response_headers"] = {
                 k.decode("utf-8"): v.decode("utf-8") for (k, v) in response.headers.raw
-            }
+            } # type: ignore
             logger.info(json.dumps(record, ensure_ascii=False))
             return response
 
