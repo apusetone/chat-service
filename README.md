@@ -10,6 +10,7 @@ It includes asynchronous DB access using asyncpg and some test code covering the
 ```shell
 # enable pre-commit
 $ brew install lefthook gitleaks
+$ lefthook install
 $ cp .env.bak .env
 # set your secret to .env
 $ make bl
