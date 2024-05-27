@@ -40,7 +40,12 @@ async def lifespan(app: FastAPI):
         pass
 
 
-app = FastAPI(title="chat-service", lifespan=lifespan)
+app = FastAPI(
+    title="chat-service",
+    docs_url=None if settings.ENV == "prd" else "/docs",
+    redoc_url=None if settings.ENV == "prd" else "/redoc",
+    lifespan=lifespan,
+)
 register_exception_handlers(app)
 app.add_middleware(TimeoutMiddleware, timeout=settings.REQUEST_TIMEOUT)
 app.include_router(api_router, prefix="/api")

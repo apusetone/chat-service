@@ -7,12 +7,18 @@ migrate: # fails if container is not running
 up:
 	docker compose up -d
 
+fmt:
+	docker compose run --rm fastapi sh -c "\
+		ruff format app"
+
+check:
+	docker compose run --rm fastapi sh -c "\
+		ruff check app --fix && \
+		mypy app --strict"
+
 test:
-	docker-compose run --rm fastapi sh -c "\
-		black app && \
-		ruff check app && \
-		mypy app && \
-		APP_CONFIG_FILE=test pytest app"
+	docker compose run --rm fastapi sh -c "\
+		APP_CONFIG_FILE=test pytest app -vv"
 
 clean:
 	docker rm -f $$(docker ps -aq)
