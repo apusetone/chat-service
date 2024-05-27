@@ -2,7 +2,7 @@ from locust import HttpUser, between, task
 
 
 class MyUser(HttpUser):
-    wait_time = between(1, 3)
+    wait_time = between(0.01, 0.03)
 
     _refresh_token = None
     _chat_id = 1
