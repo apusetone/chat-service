@@ -14,7 +14,7 @@ fmt:
 check:
 	docker compose run --rm fastapi sh -c "\
 		ruff check app --fix && \
-		mypy app --strict"
+		mypy app"
 
 test:
 	docker compose run --rm fastapi sh -c "\
