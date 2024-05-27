@@ -1,6 +1,6 @@
 pre-push:
   parallel: true
-  comands:
+  commands:
     linter:
       run: make check
 
