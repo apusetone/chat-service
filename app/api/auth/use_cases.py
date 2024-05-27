@@ -127,7 +127,6 @@ class Refresh:
 
     async def execute(self, refresh_token: str) -> RefreshResponse:
         async with self.async_session() as session:
-
             session_instance = await Session.read_by_refresh_token(
                 session, refresh_token
             )
@@ -164,7 +163,6 @@ class Logout:
         self, user_id: int, access_token: str, refresh_token: str
     ) -> None:
         async with self.async_session.begin() as session:
-
             await Session.delete(session, user_id, refresh_token)
 
             # Remove the old access_token
@@ -180,7 +178,6 @@ class Unregister:
 
     async def execute(self, user_id: int) -> None:
         async with self.async_session.begin() as session:
-
             await User.delete(session, user_id)
 
             # Remove all the old access_tokens

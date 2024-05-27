@@ -10,7 +10,6 @@ from app.models import Session, User
 
 
 async def setup_data(a_session: AsyncSession) -> None:
-
     # Userモデルのインスタンスを作成
     user1 = User(
         id=1,

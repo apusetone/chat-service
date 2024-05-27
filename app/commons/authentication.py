@@ -26,7 +26,6 @@ UNAUTHORIZED = HTTPException(
 
 
 class AccessTokenAuthentication:
-
     @classmethod
     async def get_current_user(
         cls,
@@ -46,7 +45,6 @@ class AccessTokenAuthentication:
 
 
 class TwoFaAuthentication:
-
     @classmethod
     async def get_current_user(
         cls,
@@ -64,7 +62,6 @@ class TwoFaAuthentication:
 
 
 class RefreshTokenAuthentication:
-
     @classmethod
     async def get_current_user(
         cls,
@@ -131,7 +128,6 @@ async def websocket_headers(
     websocket: WebSocket,
     authorization: str | None = Header(default=None),
 ) -> AccessTokenSchema:
-
     if authorization:
         token = authorization[len("Bearer ") :]
     else:

@@ -13,7 +13,6 @@ now_datetime = datetime(2023, 3, 5, 10, 52, 33)
 
 
 async def setup_data(a_session: AsyncSession) -> None:
-
     now = datetime(2023, 3, 5, 10, 52, 33)
 
     # Userモデルのインスタンスを作成
