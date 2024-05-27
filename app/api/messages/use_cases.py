@@ -67,7 +67,7 @@ class ReadAllMessage:
 
             # 既読にしたメッセージを返す
             for message in messages:
-                yield ReadMessageResponse.model_validate(message) # type: ignore
+                yield ReadMessageResponse.model_validate(message)  # type: ignore
 
             if message_ids:
                 await Message.update_read_by_list(session, message_ids, user_id)

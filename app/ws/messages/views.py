@@ -24,10 +24,10 @@ class WebsocketEndpointView:
     def __init__(self) -> None:
         self.async_session = AsyncSessionLocal
         self.pubsub_session = PubSubSessionLocal
-        self.chat_repo = ChatRepository(self.async_session) # type: ignore
-        self.user_repo = UserRepository(self.async_session) # type: ignore
-        self.chat_participants_repo = ChatParticipantsRepository(self.async_session) # type: ignore
-        self.session_repo = SessionRepository(self.async_session) # type: ignore
+        self.chat_repo = ChatRepository(self.async_session)  # type: ignore
+        self.user_repo = UserRepository(self.async_session)  # type: ignore
+        self.chat_participants_repo = ChatParticipantsRepository(self.async_session)  # type: ignore
+        self.session_repo = SessionRepository(self.async_session)  # type: ignore
         self.aws_repo = AwsClientRepository()
         self.notification_repo = NotificationRepository()
         self.use_case = CreateMessage(self.async_session)

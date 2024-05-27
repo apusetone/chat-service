@@ -19,7 +19,7 @@ class ChatRepository:
     async def verify_chat_participant(
         self, chat_id: int, user_id: int
     ) -> tuple[Chat | None, bool]:
-        async with self.async_session() as session: # type: ignore
+        async with self.async_session() as session:  # type: ignore
             chat = await session.execute(select(Chat).where(Chat.id == chat_id))
             chat = chat.scalars().first()
             participant = await session.execute(
@@ -42,7 +42,7 @@ class UserRepository:
         self.async_session = session
 
     async def get_user(self, user_id: int) -> User | None:
-        async with self.async_session() as session: # type: ignore
+        async with self.async_session() as session:  # type: ignore
             return await User.read_by_id(session, user_id)
 
 
@@ -51,7 +51,7 @@ class ChatParticipantsRepository:
         self.async_session = session
 
     async def get_all(self, chat_id: int) -> AsyncIterator[ChatParticipants]:
-        async with self.async_session() as session: # type: ignore
+        async with self.async_session() as session:  # type: ignore
             async for (
                 participant
             ) in ChatParticipants.read_all_active_notification_users(session, chat_id):
@@ -63,7 +63,7 @@ class SessionRepository:
         self.async_session = session
 
     async def get_all(self, user_ids: list[int]) -> AsyncIterator[Session]:
-        async with self.async_session() as a_session: # type: ignore
+        async with self.async_session() as a_session:  # type: ignore
             async for session in Session.read_all_mobile(a_session, user_ids):
                 yield session
 
@@ -115,7 +115,7 @@ class NotificationRepository:
                     }
                 }
                 if mail_client:
-                    response = mail_client.send_email( # type: ignore
+                    response = mail_client.send_email(  # type: ignore
                         Source="{} <{}>".format("SENDER", "from-address@test.com"),
                         Destination={
                             "ToAddresses": [user.email],
@@ -127,7 +127,7 @@ class NotificationRepository:
                             },
                             "Body": body,
                         },
-                    ) 
+                    )
                     logger.info(response)
                 else:
                     logger.info(body)
@@ -146,11 +146,11 @@ class NotificationRepository:
                             }
 
                         if push_client:
-                            response = push_client.publish( # type: ignore
+                            response = push_client.publish(  # type: ignore
                                 TargetArn=session.device_token,  # device_tokenをTargetArnに設定
                                 MessageStructure="json",
                                 Message=json.dumps(message_body),
-                            ) 
+                            )
                             logger.info(response)
                         else:
                             logger.info(message_payload)

@@ -27,7 +27,7 @@ class ReadAllChat:
     ) -> AsyncIterator[ReadAllChatResponse]:
         async with self.async_session() as session:
             async for chat in Chat.read_all(session, user_id, **params.model_dump()):
-                yield ReadChatResponse.model_validate(chat) # type: ignore
+                yield ReadChatResponse.model_validate(chat)  # type: ignore
 
 
 class ReadAllChatParticipant:
@@ -82,7 +82,7 @@ class ReadAllChatParticipant:
                 if not user.is_name_visible:
                     user.first_name = "ANONYMOUS"
                     user.last_name = "ANONYMOUS"
-                yield ReadChatParticipantResponse.model_validate(user) # type: ignore
+                yield ReadChatParticipantResponse.model_validate(user)  # type: ignore
 
 
 class CreateChat:
@@ -95,7 +95,11 @@ class CreateChat:
         async with self.async_session.begin() as session:
             # ユーザー名が参加者名に含まれているかチェック
             user = await User.read_by_id(session, user_id)
-            if not user or not user.username or user.username in request.participant_names:
+            if (
+                not user
+                or not user.username
+                or user.username in request.participant_names
+            ):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=[

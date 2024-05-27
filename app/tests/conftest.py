@@ -38,7 +38,8 @@ async def ac() -> AsyncGenerator:
     from app.main import app
 
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="https://test" # type: ignore
+        transport=ASGITransport(app=app),
+        base_url="https://test",  # type: ignore
     ) as c:
         yield c
 

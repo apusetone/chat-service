@@ -1,6 +1,6 @@
 import logging
 
-from asyncpg.exceptions import PostgresError # type: ignore
+from asyncpg.exceptions import PostgresError  # type: ignore
 from fastapi import FastAPI, Request
 from fastapi.exceptions import FastAPIError, RequestValidationError
 from fastapi.responses import JSONResponse

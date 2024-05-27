@@ -4,8 +4,8 @@ from app.models import ChatSchema, MaskedUserSchema
 
 
 class ReadAllChatRequest(BaseModel):
-    offset: conint(ge=0, le=50) # type: ignore
-    limit: conint(ge=0, le=10) # type: ignore
+    offset: conint(ge=0, le=50)  # type: ignore
+    limit: conint(ge=0, le=10)  # type: ignore
     desc: bool
 
 
@@ -26,8 +26,8 @@ class ReadAllChatParticipantResponse(BaseModel):
 
 
 class CreateChatRequest(BaseModel):
-    name: constr(min_length=1, max_length=50) = Field(...) # type: ignore
-    participant_names: list[constr(min_length=1, max_length=20)] = Field(...) # type: ignore
+    name: constr(min_length=1, max_length=50) = Field(...)  # type: ignore
+    participant_names: list[constr(min_length=1, max_length=20)] = Field(...)  # type: ignore
 
     @field_validator("participant_names", mode="before")
     def check_participant_names(cls, v):
