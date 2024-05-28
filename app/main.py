@@ -45,11 +45,20 @@ app = FastAPI(
     docs_url=None if settings.ENV == "prd" else "/docs",
     redoc_url=None if settings.ENV == "prd" else "/redoc",
     lifespan=lifespan,
+    debug=settings.DEBUG,
 )
 register_exception_handlers(app)
 app.add_middleware(TimeoutMiddleware, timeout=settings.REQUEST_TIMEOUT)
 app.include_router(api_router, prefix="/api")
 app.router.route_class = LoggingContextRoute
+
+if settings.DEBUG:
+    from debug_toolbar.middleware import DebugToolbarMiddleware
+
+    app.add_middleware(
+        DebugToolbarMiddleware,
+        panels=["app.db.SQLAlchemyPanel"],
+    )
 
 
 # TODO: viewsに配置したかった

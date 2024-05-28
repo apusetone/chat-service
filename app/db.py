@@ -1,7 +1,8 @@
 import logging
 from typing import Annotated, AsyncGenerator, AsyncIterator
 
-from fastapi import Depends
+from debug_toolbar.panels.sqlalchemy import SQLAlchemyPanel as BasePanel
+from fastapi import Depends, Request
 from redis.asyncio import Redis, from_url
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -21,6 +22,12 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
     future=True,
 )
+
+if settings.DEBUG:
+
+    class SQLAlchemyPanel(BasePanel):
+        async def add_engines(self, request: Request) -> None:
+            self.engines.add(async_engine.sync_engine)
 
 
 async def get_session() -> AsyncIterator[async_sessionmaker]:

@@ -28,6 +28,7 @@ time-machine = "2.14.1"
 fastapi-cache2 = "^0.2.1"
 boto3-stubs = "^1.34.113"
 asyncpg-stubs = "^0.29.1"
+fastapi-debug-toolbar = "^0.6.3"
 
 [tool.poetry.group.dev.dependencies]
 eqassertions = "^0.4"
