@@ -1,21 +1,63 @@
 from contextlib import asynccontextmanager
+from typing import Union
 
 import redis.asyncio as redis
+from authlib.integrations.starlette_client import OAuth
 from fastapi import Depends, FastAPI, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_limiter import FastAPILimiter
+from sqladmin import Admin
+from sqladmin.authentication import AuthenticationBackend
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.requests import Request
+from starlette.responses import RedirectResponse, Response
 
 from app.api.main import router as api_router
+from app.commons.admin import admins
 from app.commons.authentication import websocket_headers
 from app.commons.exceptions import register_exception_handlers
 from app.commons.logging import LoggingContextRoute
 from app.commons.middlewares import TimeoutMiddleware
 from app.commons.types import CacheType
+from app.db import async_engine
 from app.models.schema import AccessTokenSchema
 from app.settings import settings
 from app.ws.messages.views import WebsocketEndpointView
+
+oauth = OAuth()
+oauth.register(
+    "google",
+    client_id=settings.GOOGLE_CLIENT_ID,
+    client_secret=settings.GOOGLE_CLIENT_SECRET,
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={
+        "scope": "openid email profile",
+        "prompt": "select_account",
+    },
+    redirect_uri="http://localhost:8000/auth/google",
+)
+google = oauth.create_client("google")
+
+
+class AdminAuth(AuthenticationBackend):
+    async def login(self, request: Request) -> bool:
+        redirect_uri = request.url_for("login_google")
+        return await google.authorize_redirect(request, redirect_uri)
+
+    async def logout(self, request: Request) -> bool:
+        request.session.clear()
+        return True
+
+    async def authenticate(self, request: Request) -> Union[bool, RedirectResponse]:
+        user = request.session.get("user")
+        if not user:
+            redirect_uri = request.url_for("login_google")
+            return await google.authorize_redirect(request, redirect_uri)
+
+        return True
 
 
 @asynccontextmanager
@@ -51,6 +93,35 @@ register_exception_handlers(app)
 app.add_middleware(TimeoutMiddleware, timeout=settings.REQUEST_TIMEOUT)
 app.include_router(api_router, prefix="/api")
 app.router.route_class = LoggingContextRoute
+
+# 管理画面
+admin = Admin(
+    app=app,
+    engine=async_engine,
+    authentication_backend=AdminAuth(settings.SECRET),
+    base_url="/admin",
+    debug=True,  # settings.DEBUG
+)
+admin.app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["localhost:8000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+admin.app.add_middleware(SessionMiddleware, secret_key=settings.SECRET)
+for a in admins:
+    admin.add_view(a)
+
+
+@admin.app.route("/auth/google")
+async def login_google(request: Request) -> Response:
+    token = await google.authorize_access_token(request)
+    user = token.get("userinfo")
+    if user:
+        request.session["user"] = user
+    return RedirectResponse(request.url_for("admin:index"))
+
 
 if settings.DEBUG:
     from debug_toolbar.middleware import DebugToolbarMiddleware

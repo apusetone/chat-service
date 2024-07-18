@@ -7,7 +7,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     ENV: str = os.environ["STAGE"]
     DEBUG: bool = False
-
+    SECRET: str
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
     DB_URI: str
     ECHO_SQL: bool
     REDIS_URI: str
