@@ -7,7 +7,7 @@ packages = [{include = "chat_service"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-alembic = "^1.13.1"
+alembic = "^1.14.1"
 black = "^24.3.0"
 fastapi = "^0.110.0"
 pydantic-settings = "^2.2.1"
